@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☆ Produce 48 RPG ☆</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* ========================================================
+           TEMA: Y2K KAWAII OS
+           ======================================================== */
+        :root {
+            --hot-pink: #ff66a3;
+            --soft-pink: #ffb3d1;
+            --bg-pink: #fff0f5;
+            --kawaii-blue: #99ccff;
+            --kawaii-yellow: #fff599;
+            --text-dark: #555555;
+            
+            --rank-a: #ff66a3; --rank-b: #ff9933; --rank-c: #ffcc00;
+            --rank-d: #33cc66; --rank-f: #999999;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-pink);
+            background-image: radial-gradient(var(--soft-pink) 2px, transparent 2px);
+            background-size: 20px 20px;
+            color: var(--text-dark);
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            cursor: crosshair;
+            padding-bottom: 50px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, .pixel-text { font-family: 'DotGothic16', sans-serif; }
+
+        ::-webkit-scrollbar { width: 12px; }
+        ::-webkit-scrollbar-track { background: var(--bg-pink); border-left: 2px dashed var(--soft-pink); }
+        ::-webkit-scrollbar-thumb { background: var(--hot-pink); border-radius: 10px; border: 2px solid white; }
+
+        .kawaii-window {
+            background: white; border: 3px solid var(--hot-pink);
+            border-radius: 8px; box-shadow: 6px 6px 0px var(--soft-pink);
+            margin-bottom: 30px; overflow: hidden;
+        }
+
+        .window-header {
+            background: var(--hot-pink); color: white; padding: 8px 15px;
+            font-family: 'DotGothic16', sans-serif; font-size: 18px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .window-content { padding: 20px; }
+
+        .marquee-top {
+            background: var(--hot-pink); color: white; font-family: 'DotGothic16', sans-serif;
+            padding: 5px; font-size: 16px; letter-spacing: 1px; border-bottom: 2px dashed white;
+        }
+
+        .navbar { text-align: center; margin: 30px 0; }
+
+        .nav-btn {
+            background: white; border: 2px solid var(--hot-pink); color: var(--hot-pink);
+            padding: 10px 20px; font-family: 'DotGothic16', sans-serif; font-size: 18px;
+            cursor: pointer; margin: 0 5px 10px 5px; border-radius: 20px;
+            box-shadow: 3px 3px 0px var(--soft-pink); transition: 0.1s; display: inline-block; text-decoration: none;
+        }
+
+        .nav-btn:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px transparent; }
+        .nav-btn.active { background: var(--hot-pink); color: white; }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 0 15px; }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: popUp 0.3s ease; }
+        @keyframes popUp { 0% { transform: scale(0.98); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* CARDS TRAINEES */
+        .trainee-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .t-card {
+            border: 2px dashed var(--soft-pink); background: #fff; padding: 10px;
+            text-align: center; border-radius: 10px; transition: 0.2s; position: relative;
+            cursor: pointer;
+        }
+        .t-card:hover { border-style: solid; border-color: var(--hot-pink); background: var(--bg-pink); transform: translateY(-5px); }
+        .t-card.eliminated { filter: grayscale(1); opacity: 0.6; }
+        .t-card.selected { border: 4px solid var(--hot-pink); background: var(--bg-pink); transform: scale(1.05); box-shadow: 0px 5px 15px rgba(255, 102, 163, 0.4); z-index: 2; }
+        
+        .t-photo { width: 100%; aspect-ratio: 1/1; object-fit: cover; border: 2px solid var(--hot-pink); border-radius: 5px; margin-bottom: 8px; background: #eee; }
+        .t-card.selected .t-photo { border-width: 4px; }
+        
+        .t-name { font-weight: 700; font-size: 14px; color: var(--hot-pink); line-height: 1.2; }
+        .t-co { font-size: 11px; color: #999; margin-top: 4px; }
+        .rank-stamp {
+            position: absolute; top: 5px; left: 5px; width: 26px; height: 26px; border-radius: 50%; color: white;
+            font-family: 'DotGothic16', sans-serif; display: flex; align-items: center; justify-content: center;
+            border: 2px solid white; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); z-index: 3;
+        }
+        
+        .voted-stamp {
+            margin-top: 10px; color: var(--hot-pink); font-weight: bold; font-size: 12px;
+            background: white; border: 2px solid var(--hot-pink); border-radius: 10px; padding: 2px 5px;
+        }
+
+        /* INPUTS */
+        .cute-input {
+            width: 100%; padding: 12px; border: 2px solid var(--soft-pink); border-radius: 15px;
+            font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 14px; outline: none;
+            margin-bottom: 15px; background: #fffafa; color: var(--hot-pink);
+        }
+        .cute-input:focus { border-color: var(--hot-pink); }
+
+        /* PIRÂMIDE DE RANKING */
+        .pyramid-wrap { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px; }
+        .pyr-row { display: flex; justify-content: center; gap: 15px; }
+        .pyr-slot {
+            width: 90px; background: white; border: 2px solid var(--hot-pink); border-radius: 10px;
+            padding: 5px; text-align: center; position: relative; box-shadow: 3px 3px 0px var(--soft-pink);
+        }
+        .hidden-placeholder { visibility: hidden; pointer-events: none; }
+        .pyr-slot.empty { background: var(--kawaii-blue); border: 2px dashed white; box-shadow: none; display: flex; align-items: center; justify-content: center; height: 100px; color: white; font-family: 'DotGothic16', sans-serif; font-size: 24px; cursor: pointer; }
+        .pyr-photo { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 5px; border: 1px solid #eee; background: #eee; }
+        .pyr-name { font-family: 'DotGothic16', sans-serif; font-size: 13px; color: var(--hot-pink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 5px; }
+        .pyr-pos {
+            position: absolute; top: -10px; right: -10px; background: var(--kawaii-yellow);
+            border: 2px solid var(--hot-pink); color: var(--hot-pink); width: 25px; height: 25px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'DotGothic16', sans-serif; font-weight: bold; z-index: 5;
+        }
+        .pyr-slot.top1 { transform: scale(1.15); margin-bottom: 10px; border-color: #ffcc00; box-shadow: 3px 3px 0px #ffcc00; }
+        .pyr-slot.top1 .pyr-pos { background: #ffcc00; color: white; border-color: white; }
+
+        /* LISTA DE VOTAÇÃO */
+        .vote-item {
+            display: flex; align-items: center; padding: 10px; border: 2px solid var(--soft-pink);
+            border-radius: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;
+        }
+        .vote-item:hover { background: var(--bg-pink); }
+        .vote-item.selected { background: var(--hot-pink); color: white; border-color: var(--hot-pink); box-shadow: 3px 3px 0px #333; }
+        .vote-item .t-photo { width: 50px; height: 50px; margin-bottom: 0; margin-right: 15px; border-radius: 50%; background: #eee; }
+        .vote-item .t-name { font-size: 18px; margin-bottom: 3px; }
+        .vote-item.selected .t-name, .vote-item.selected .t-co { color: white; }
+        .vote-check { margin-left: auto; font-family: 'DotGothic16'; font-size: 20px; color: transparent; }
+        .vote-item.selected .vote-check { color: var(--kawaii-yellow); }
+
+        /* MODAIS GERAIS */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(255,182,193,0.8);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: white; border: 4px dashed var(--hot-pink); border-radius: 20px; padding: 30px; text-align: center;
+            box-shadow: 5px 5px 0px var(--hot-pink); max-width: 350px; width: 90%;
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        .history-list {
+            list-style: none; padding: 0; margin-top: 10px;
+            background: #fffafa; border: 2px solid var(--soft-pink); border-radius: 8px;
+            text-align: left; font-size: 13px; max-height: 120px; overflow-y: auto;
+        }
+        .history-list li { padding: 8px 12px; border-bottom: 1px dashed var(--soft-pink); display: flex; justify-content: space-between; }
+        .history-list li:last-child { border-bottom: none; }
+
+        /* TELA DE LOADING INICIAL */
+        #initial-loading {
+            position: fixed; inset: 0; background: var(--bg-pink); z-index: 3000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .loading-heart {
+            font-size: 50px; color: var(--hot-pink);
+            animation: pulse 1s infinite alternate;
+            margin-bottom: 20px;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.2); }
+        }
+
+        .bg-a { background: var(--rank-a); } .bg-b { background: var(--rank-b); }
+        .bg-c { background: var(--rank-c); } .bg-d { background: var(--rank-d); } .bg-f { background: var(--rank-f); }
+    </style>
+</head>
+
+<body>
+
+    <div id="initial-loading">
+        <i class="fas fa-heart loading-heart"></i>
+        <h2 class="pixel-text" style="color: var(--hot-pink);">A conectar à Nuvem...</h2>
+    </div>
+
+    <div class="marquee-top">
+        <marquee scrollamount="6"><i class="fas fa-star"></i> Bem-vindos ao PRODUCE 48 RPG! Agora as trainees são carregadas DIRETAMENTE do banco de dados! <i class="fas fa-star"></i></marquee>
+    </div>
+
+    <div class="navbar">
+        <button class="nav-btn active" onclick="switchView('view-home', this)"><i class="fas fa-home"></i> Home</button>
+        <button class="nav-btn" onclick="switchView('view-trainees', this)"><i class="fas fa-user-graduate"></i> Trainees</button>
+        <button class="nav-btn" onclick="switchView('view-ranking', this)"><i class="fas fa-crown"></i> Top 12</button>
+        <button class="nav-btn" onclick="switchView('view-vote', this)"><i class="fas fa-vote-yea"></i> Votar</button>
+    </div>
+
+    <main class="container">
+
+        <div id="view-home" class="view-section active">
+            <div class="kawaii-window">
+                <div class="window-header">
+                    <span><i class="fas fa-terminal"></i> Welcome.exe</span>
+                    <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="window-content" style="text-align: center;">
+                    <h1 style="color: var(--hot-pink); font-size: 40px; text-shadow: 3px 3px 0px var(--kawaii-yellow); margin-bottom: 20px;">PRODUCE 48 RPG</h1>
+                    
+                    <p style="font-size: 16px; line-height: 1.8; margin-bottom: 20px;">
+                        Olá, <strong>Produtor Nacional</strong>! <i class="fas fa-smile-beam" style="color: var(--hot-pink);"></i><br>
+                        O nosso sistema lê todas as trainees diretamente do <strong>Supabase</strong>.<br>
+                        Entrámos na fase do <strong>1-PICK</strong>! Escolha e salve a sua favorita.
+                    </p>
+
+                    <div style="background: var(--kawaii-yellow); border: 2px dashed var(--hot-pink); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <span class="pixel-text" style="font-size: 20px; color: var(--hot-pink);"><i class="fas fa-sparkles"></i> O SEU VOTO MUDA O DESTINO! <i class="fas fa-sparkles"></i></span>
+                    </div>
+
+                    <button class="nav-btn" style="background: var(--hot-pink); color: white;" onclick="switchView('view-vote', document.querySelectorAll('.nav-btn')[3])"><i class="fas fa-heart"></i> Quero Votar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-trainees" class="view-section">
+            <div class="kawaii-window">
+                <div class="window-header">
+                    <span><i class="fas fa-file-alt"></i> Trainees.txt</span>
+                    <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="window-content">
+                    <div style="position: relative;">
+                        <input type="text" id="search-part" class="cute-input" placeholder="Pesquisar por nome ou empresa..." oninput="renderTrainees()">
+                    </div>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <label style="cursor: pointer; font-size: 14px; font-weight: bold; color: var(--hot-pink);">
+                            <input type="checkbox" id="filter-elim" onchange="renderTrainees()" style="accent-color: var(--hot-pink);"> Mostrar Eliminadas <i class="fas fa-heart-broken"></i>
+                        </label>
+                    </div>
+                    <div class="trainee-grid" id="trainee-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-ranking" class="view-section">
+            <div class="kawaii-window">
+                <div class="window-header">
+                    <span><i class="fas fa-chart-bar"></i> Ranking_Oficial.exe</span>
+                    <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="window-content">
+                    <h2 style="text-align: center; color: var(--hot-pink); margin-bottom: 10px;"><i class="fas fa-crown"></i> A Pirâmide do Sucesso <i class="fas fa-crown"></i></h2>
+                    <p style="text-align: center; font-size: 14px; color: #888; margin-bottom: 20px;">Posições Oficiais da Semana!</p>
+                    
+                    <div class="pyramid-wrap" id="ranking-pyramid"></div>
+                    
+                    <div id="ranking-pagination" style="text-align: center; margin-top: 30px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-vote" class="view-section">
+            <div class="kawaii-window">
+                <div class="window-header">
+                    <span><i class="fas fa-box-open"></i> Urna_Eletronica.bat</span>
+                    <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="window-content">
+                    
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h2 class="pixel-text" style="font-size: 30px; color: var(--hot-pink);">Meu 1-Pick ♡</h2>
+                        <p style="font-size: 14px; color: var(--text-dark);">Escolha com cuidado a trainee que deseja salvar!</p>
+                    </div>
+
+                    <div id="selected-trainee-display" style="text-align: center; height: 160px; margin-bottom: 20px;">
+                        </div>
+
+                    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 30px;">
+                        <button class="nav-btn" id="btn-submit" style="background: var(--hot-pink); color: white;" onclick="submitVote()"><i class="fas fa-paper-plane"></i> Enviar Voto</button>
+                    </div>
+
+                    <input type="text" id="search-vote" class="cute-input" placeholder="Procurar trainee para votar..." oninput="renderVoteList()">
+                    <div class="trainee-grid" id="vote-grid" style="max-height: 400px; overflow-y: auto; padding-right: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div class="modal-overlay" id="modal">
+        <div class="modal-box">
+            <h3 id="modal-title" class="pixel-text" style="font-size: 28px; color: var(--hot-pink); margin-bottom: 15px;"></h3>
+            <p id="modal-body" style="margin-bottom: 20px; font-size: 14px; font-weight: bold; color: #555;"></p>
+            <button class="nav-btn" style="background: var(--hot-pink); color: white;" onclick="closeModal()"><i class="fas fa-check"></i> Fechar</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="trainee-modal">
+        <div class="kawaii-window" style="max-width: 400px; width: 90%; margin: auto; box-shadow: 8px 8px 0px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;">
+            <div class="window-header">
+                <span><i class="fas fa-id-card"></i> Perfil_Trainee.exe</span>
+                <span style="cursor:pointer" onclick="closeTraineeModal()"><i class="fas fa-times"></i></span>
+            </div>
+            <div class="window-content" style="text-align: center; background: white;">
+                
+                <img id="tm-photo" src="" style="width: 140px; height: 140px; border-radius: 10px; border: 4px solid var(--hot-pink); object-fit: cover; margin-bottom: 15px; box-shadow: 4px 4px 0px var(--soft-pink);">
+                
+                <h2 id="tm-name" class="pixel-text" style="color: var(--hot-pink); font-size: 32px; margin-bottom: 5px; text-shadow: 2px 2px 0px var(--kawaii-yellow);"></h2>
+                
+                <div style="background: var(--bg-pink); border: 2px dashed var(--hot-pink); border-radius: 10px; padding: 15px; text-align: left; font-size: 14px; margin-bottom: 15px;">
+                    <p style="margin-bottom: 8px;"><strong><i class="fas fa-building"></i> Agência:</strong> <span id="tm-company" style="color: var(--text-dark);"></span></p>
+                    <p style="margin-bottom: 8px;"><strong><i class="fas fa-birthday-cake"></i> Nascimento:</strong> <span id="tm-year" style="color: var(--text-dark);"></span></p>
+                    <p style="margin-bottom: 8px;"><strong><i class="fas fa-star"></i> Avaliação:</strong> Classe <strong id="tm-rank" style="text-transform: uppercase; color: var(--hot-pink);"></strong></p>
+                    <p><strong><i class="fas fa-info-circle"></i> Status:</strong> <span id="tm-status" style="font-weight: bold;"></span></p>
+                </div>
+
+                <div style="text-align: left; margin-bottom: 20px;">
+                    <h4 style="color: var(--hot-pink); margin-bottom: 5px; font-family: 'DotGothic16'; font-size: 18px;"><i class="fas fa-chart-line"></i> Histórico de Posições</h4>
+                    <ul id="tm-history" class="history-list">
+                        </ul>
+                </div>
+                
+                <button class="nav-btn" style="background: var(--hot-pink); color: white; width: 100%; margin: 0;" onclick="closeTraineeModal()"><i class="fas fa-check"></i> Fechar Perfil</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURAÇÃO DO SUPABASE 
+        // ==========================================
+        const SUPABASE_URL = 'https://ykkwsxismfvqujfwfimj.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_Xyhc8jE-rp9PL_y9wH1IQQ_ljfPBJcZ';
+        
+        // Criando a conexão de forma limpa (Usando a tag script normal sem type="module")
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Variáveis Globais
+        let T = [];
+        let selectedVoteId = null;
+
+        // ==========================================
+        // CARREGAR DADOS DO SUPABASE AO ABRIR O SITE
+        // ==========================================
+        async function carregarTraineesDoBanco() {
+            try {
+                // Tenta buscar todas as trainees da tabela 'trainees'
+                const { data, error } = await supabaseClient
+                    .from('trainees')
+                    .select('*')
+                    .order('rank_atual', { ascending: true }); // Ordena pelo ranking atual
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    T = data.map(row => ({
+                        id: row.id,
+                        name: row.nome,
+                        co: row.empresa,
+                        rank: row.classe,
+                        elim: row.eliminada,
+                        cr: row.rank_atual,
+                        yr: row.ano_nascimento,
+                        img: row.foto_url,
+                        historico: row.historico
+                    }));
+                } else {
+                    console.warn("A tabela 'trainees' está vazia.");
+                }
+            } catch (err) {
+                console.error("Erro ao carregar trainees:", err);
+                showModal("Aviso", "Não foi possível carregar as trainees. Verifique se criou a tabela 'trainees' no SQL Editor do Supabase.");
+            } finally {
+                // Esconder tela de loading e renderizar a UI
+                document.getElementById('initial-loading').style.display = 'none';
+                window.renderTrainees();
+                window.renderRanking(1);
+                window.renderVoteList();
+                window.renderSelectedVoteDisplay();
+            }
+        }
+
+        // ==========================================
+        // FUNÇÕES GERAIS DE NAVEGAÇÃO
+        // ==========================================
+        window.switchView = function(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            if(element) element.classList.add('active');
+            window.scrollTo(0,0);
+        };
+
+        window.closeModal = function() { document.getElementById('modal').classList.remove('show'); };
+        
+        window.showModal = function(title, body) {
+            document.getElementById('modal-title').innerHTML = title;
+            document.getElementById('modal-body').innerHTML = body;
+            document.getElementById('modal').classList.add('show');
+        };
+
+        function getSafeImgTag(t, cssClass) {
+            const safeName = encodeURIComponent(t.name || 'Unknown');
+            const fallback = `https://ui-avatars.com/api/?name=${safeName}&background=ffb3d1&color=fff&size=150`;
+            const primarySrc = t.img ? t.img : fallback;
+            return `<img src="${primarySrc}" class="${cssClass}" onerror="this.onerror=null; this.src='${fallback}';">`;
+        }
+
+        window.openTraineeModal = function(id) {
+            const t = T.find(x => x.id === id);
+            if(!t) return;
+            
+            const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=ffb3d1&color=fff&size=150`;
+            const imgEl = document.getElementById('tm-photo');
+            imgEl.src = t.img ? t.img : fallback;
+            imgEl.onerror = function() { this.onerror=null; this.src=fallback; };
+
+            document.getElementById('tm-name').innerText = t.name || "Desconhecida";
+            document.getElementById('tm-company').innerText = t.co || "S/ Agência";
+            document.getElementById('tm-year').innerText = t.yr || "Desconhecido";
+            document.getElementById('tm-rank').innerText = (t.rank || "-").toUpperCase();
+            
+            const statusEl = document.getElementById('tm-status');
+            if(t.elim) {
+                statusEl.innerHTML = "Eliminada <i class='fas fa-heart-broken'></i>";
+                statusEl.style.color = "#999";
+            } else {
+                statusEl.innerHTML = "Sobrevivente! <i class='fas fa-heart' style='color:var(--hot-pink)'></i>";
+                statusEl.style.color = "var(--rank-d)";
+            }
+
+            const histEl = document.getElementById('tm-history');
+            if(t.historico && t.historico.length > 0) {
+                histEl.innerHTML = t.historico.map(h => `
+                    <li>
+                        <span><strong><i class="fas fa-calendar-week"></i> Semana ${h.semana}</strong></span>
+                        <span style="color: var(--hot-pink); font-weight: bold;">Rank ${h.pos}</span>
+                    </li>
+                `).join('');
+            } else {
+                histEl.innerHTML = `<li style="justify-content:center; color:#999;">Sem histórico disponível</li>`;
+            }
+
+            document.getElementById('trainee-modal').classList.add('show');
+        };
+
+        window.closeTraineeModal = function() {
+            document.getElementById('trainee-modal').classList.remove('show');
+        };
+
+        // ==========================================
+        // RENDERIZAÇÕES
+        // ==========================================
+        window.renderTrainees = function() {
+            try {
+                const searchEl = document.getElementById('search-part');
+                const q = searchEl ? searchEl.value.toLowerCase() : '';
+                const showElim = document.getElementById('filter-elim').checked;
+                
+                const html = T.filter(t => {
+                    if (t.elim && !showElim) return false;
+                    const name = (t.name || '').toLowerCase();
+                    const co = (t.co || '').toLowerCase();
+                    if (q && !name.includes(q) && !co.includes(q)) return false;
+                    return true;
+                }).map(t => {
+                    const rankClass = t.rank ? `bg-${t.rank.toLowerCase()}` : 'bg-f';
+                    const rankLetter = (t.rank || '-').toUpperCase();
+                    return `
+                    <div class="t-card ${t.elim ? 'eliminated' : ''}" onclick="openTraineeModal(${t.id})">
+                        <div class="rank-stamp ${rankClass}">${rankLetter}</div>
+                        ${getSafeImgTag(t, 't-photo')}
+                        <div class="t-name">${t.name || ''}</div>
+                        <div class="t-co">${t.co || ''}</div>
+                    </div>`;
+                }).join('');
+                
+                const grid = document.getElementById('trainee-grid');
+                if(T.length === 0) grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Nenhuma trainee cadastrada no Banco de Dados ainda!</p>";
+                else grid.innerHTML = html;
+                
+            } catch(e) { console.error("Erro renderTrainees:", e); }
+        };
+
+        window.renderRanking = function(page = 1) {
+            try {
+                const TRAINEES_PER_PAGE = 12;
+                const activeTrainees = [...T].filter(t => !t.elim).sort((a,b) => (a.cr || 99) - (b.cr || 99));
+                const totalPages = Math.ceil(activeTrainees.length / TRAINEES_PER_PAGE) || 1;
+                
+                const startIndex = (page - 1) * TRAINEES_PER_PAGE;
+                const pageTrainees = activeTrainees.slice(startIndex, startIndex + TRAINEES_PER_PAGE);
+                
+                const layout = [[0], [1, 2], [3, 4, 5, 6], [7, 8, 9, 10, 11]];
+                
+                const html = layout.map(row => `
+                    <div class="pyr-row">
+                        ${row.map(i => {
+                            const t = pageTrainees[i];
+                            const globalPos = startIndex + i + 1; 
+                            
+                            if(!t) return `<div class="pyr-slot hidden-placeholder"></div>`; 
+                            
+                            const isTop1 = (globalPos === 1) ? 'top1' : '';
+                            
+                            return `
+                            <div class="pyr-slot ${isTop1}" onclick="openTraineeModal(${t.id})" style="cursor: pointer;">
+                                <div class="pyr-pos">${globalPos}</div>
+                                ${getSafeImgTag(t, 'pyr-photo')}
+                                <div class="pyr-name">${t.name}</div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                `).join('');
+                
+                document.getElementById('ranking-pyramid').innerHTML = html;
+
+                let pagHtml = '';
+                for(let i = 1; i <= totalPages; i++) {
+                    const isActive = (i === page) ? 'active' : '';
+                    const startLabel = ((i - 1) * TRAINEES_PER_PAGE) + 1;
+                    const endLabel = Math.min(i * TRAINEES_PER_PAGE, activeTrainees.length);
+                    
+                    pagHtml += `<button class="nav-btn ${isActive}" style="padding: 5px 15px; font-size: 14px;" onclick="renderRanking(${i})">Ranks ${startLabel}-${endLabel}</button>`;
+                }
+                document.getElementById('ranking-pagination').innerHTML = pagHtml;
+
+            } catch (e) { console.error("Erro renderRanking:", e); }
+        };
+
+        window.renderVoteList = function() {
+            try {
+                const searchEl = document.getElementById('search-vote');
+                const q = searchEl ? searchEl.value.toLowerCase() : '';
+                
+                const html = T.filter(t => !t.elim).filter(t => {
+                    const name = (t.name || '').toLowerCase();
+                    const co = (t.co || '').toLowerCase();
+                    return !q || name.includes(q) || co.includes(q);
+                }).map(t => {
+                    const isSelected = selectedVoteId === t.id;
+                    const rankClass = t.rank ? `bg-${t.rank.toLowerCase()}` : 'bg-f';
+                    const rankLetter = (t.rank || '-').toUpperCase();
+                    
+                    return `
+                    <div class="t-card ${isSelected ? 'selected' : ''}" onclick="toggleVote(${t.id})">
+                        <div class="rank-stamp ${rankClass}">${rankLetter}</div>
+                        ${getSafeImgTag(t, 't-photo')}
+                        <div class="t-name">${t.name || ''}</div>
+                        <div class="t-co">${t.co || ''}</div>
+                        ${isSelected ? '<div class="voted-stamp"><i class="fas fa-heart"></i> MINHA PICK</div>' : ''}
+                    </div>`;
+                }).join('');
+                document.getElementById('vote-grid').innerHTML = html;
+            } catch(e) { console.error("Erro renderVoteList:", e); }
+        };
+
+        window.renderSelectedVoteDisplay = function() {
+            const display = document.getElementById('selected-trainee-display');
+            if(selectedVoteId === null) {
+                display.innerHTML = `
+                    <div style="display:flex; align-items:center; justify-content:center; height:100%; border: 2px dashed var(--soft-pink); border-radius: 10px; color: #aaa; background: #fff;">
+                        <i class="fas fa-user-plus" style="margin-right: 10px; font-size: 20px;"></i> Nenhuma trainee selecionada
+                    </div>`;
+            } else {
+                const t = T.find(x => x.id === selectedVoteId);
+                display.innerHTML = `
+                    <div style="display:inline-block; border: 3px solid var(--hot-pink); padding: 15px 30px; border-radius: 15px; background: white; box-shadow: 4px 4px 0px var(--soft-pink);">
+                        ${getSafeImgTag(t, '')}
+                        <div class="pixel-text" style="font-size: 24px; color: var(--hot-pink); margin-top: 10px; text-shadow: 1px 1px 0px var(--kawaii-yellow);">${t.name}</div>
+                    </div>
+                `;
+                const img = display.querySelector('img');
+                if(img) {
+                    img.style.width = '80px'; img.style.height = '80px';
+                    img.style.objectFit = 'cover'; img.style.borderRadius = '50%';
+                    img.style.border = '2px solid var(--hot-pink)';
+                }
+            }
+        };
+
+        // ==========================================
+        // SISTEMA DE SELEÇÃO 1-PICK E SUBMISSÃO
+        // ==========================================
+        window.toggleVote = function(id) {
+            if(selectedVoteId === id) {
+                selectedVoteId = null; 
+            } else {
+                selectedVoteId = id; 
+            }
+            window.renderVoteList();
+            window.renderSelectedVoteDisplay();
+        };
+
+        window.submitVote = async function() {
+            if(selectedVoteId === null) {
+                window.showModal('Atenção <i class="fas fa-exclamation-triangle"></i>', `Por favor, escolhe uma trainee para salvar!`);
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> A Enviar...";
+
+            try {
+                const escolhas = [selectedVoteId]; 
+                
+                const { data, error } = await supabaseClient
+                    .from('votos')
+                    .insert([{ 
+                        escolhas: escolhas,
+                        data_voto: new Date().toISOString()
+                    }]);
+
+                if (error) throw error;
+
+                window.showModal('Voto Guardado! <i class="fas fa-heart"></i>', 'O teu 1-Pick foi enviado com sucesso para a Base de Dados! Obrigada pelo teu voto <i class="fas fa-smile-beam"></i>');
+                
+                selectedVoteId = null;
+                window.renderVoteList();
+                window.renderSelectedVoteDisplay();
+                
+            } catch (err) {
+                console.error("Erro na inserção:", err);
+                window.showModal('Erro <i class="fas fa-times-circle"></i>', `Não foi possível enviar o voto. Detalhe: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "<i class='fas fa-paper-plane'></i> Enviar Voto";
+            }
+        };
+
+        // INICIAR
+        window.onload = () => {
+            // Expõe a função de ranking para o HTML a chamar com onClick()
+            window.renderRanking = renderRanking;
+            
+            // Dispara o carregamento do banco de dados e aguarda a resposta antes de iniciar
+            carregarTraineesDoBanco();
+        };
+    </script>
+</body>
+</html>
