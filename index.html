@@ -120,7 +120,7 @@
             outline: none; cursor: pointer; box-shadow: 2px 2px 0px var(--soft-pink);
         }
 
-        /* PIRÂMIDE */
+        /* PIRÂMIDE DE RANKING */
         .pyramid-wrap { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 10px; }
         .pyr-row { display: flex; justify-content: center; gap: 15px; }
         .pyr-slot {
@@ -178,7 +178,7 @@
     </div>
 
     <div class="marquee-top">
-        <marquee scrollamount="6"><i class="fas fa-star"></i> Bem-vindos ao PRODUCE 48 RPG! Agora podes consultar o ranking completo e semanas anteriores na aba Top 12! <i class="fas fa-star"></i></marquee>
+        <marquee scrollamount="6"><i class="fas fa-star"></i> Bem-vindos ao PRODUCE 48 RPG! Agora podes consultar o ranking completo e semanas anteriores na aba Ranking! <i class="fas fa-star"></i></marquee>
     </div>
 
     <div class="navbar">
@@ -320,8 +320,10 @@
     </div>
 
     <script>
-        // Configuração Supabase
-        const SUPABASE_URL = 'https://ryxcyvmbnfxbttxtvwnf.supabase.co'; 
+        // ==========================================
+        // CONFIGURAÇÃO DO SUPABASE 
+        // ==========================================
+        const SUPABASE_URL = 'https://ykkwsxismfvqujfwfimj.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_Xyhc8jE-rp9PL_y9wH1IQQ_ljfPBJcZ';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -364,10 +366,12 @@
                     availableWeeks = Array.from(weeksSet).sort((a, b) => b - a); // Ordem decrescente
                     
                     populateWeekSelector();
+                } else {
+                    console.warn("Nenhuma trainee encontrada no banco.");
                 }
             } catch (err) {
                 console.error("Erro:", err);
-                showModal("Erro de Conexão", "Não foi possível carregar as trainees. A tabela 'trainees' existe?");
+                showModal("Erro de Conexão", "Não foi possível carregar as trainees. A URL do Supabase está correta?");
             } finally {
                 document.getElementById('initial-loading').style.display = 'none';
                 window.renderTrainees();
