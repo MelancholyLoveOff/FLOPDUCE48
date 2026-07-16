@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☆ Produce 48 RPG — 1-Pick ☆</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+        /* ========================================================
+           TEMA: Y2K KAWAII OS
+           ======================================================== */
+        :root {
+            --hot-pink: #ff66a3;
+            --soft-pink: #ffb3d1;
+            --bg-pink: #fff0f5;
+            --kawaii-blue: #99ccff;
+            --kawaii-yellow: #fff599;
+            --text-dark: #555555;
+            
+            --rank-a: #ff66a3; --rank-b: #ff9933; --rank-c: #ffcc00;
+            --rank-d: #33cc66; --rank-f: #999999;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-pink);
+            background-image: radial-gradient(var(--soft-pink) 2px, transparent 2px);
+            background-size: 20px 20px;
+            color: var(--text-dark);
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            cursor: crosshair;
+            padding-bottom: 50px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, .pixel-text { font-family: 'DotGothic16', sans-serif; }
+
+        ::-webkit-scrollbar { width: 12px; }
+        ::-webkit-scrollbar-track { background: var(--bg-pink); border-left: 2px dashed var(--soft-pink); }
+        ::-webkit-scrollbar-thumb { background: var(--hot-pink); border-radius: 10px; border: 2px solid white; }
+
+        .kawaii-window {
+            background: white; border: 3px solid var(--hot-pink);
+            border-radius: 8px; box-shadow: 6px 6px 0px var(--soft-pink);
+            margin-bottom: 30px; overflow: hidden;
+        }
+
+        .window-header {
+            background: var(--hot-pink); color: white; padding: 8px 15px;
+            font-family: 'DotGothic16', sans-serif; font-size: 18px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .window-content { padding: 20px; }
+
+        .marquee-top {
+            background: var(--hot-pink); color: white; font-family: 'DotGothic16', sans-serif;
+            padding: 5px; font-size: 16px; letter-spacing: 1px; border-bottom: 2px dashed white;
+        }
+
+        .navbar { text-align: center; margin: 30px 0; }
+
+        .nav-btn {
+            background: white; border: 2px solid var(--hot-pink); color: var(--hot-pink);
+            padding: 10px 20px; font-family: 'DotGothic16', sans-serif; font-size: 18px;
+            cursor: pointer; margin: 0 5px 10px 5px; border-radius: 20px;
+            box-shadow: 3px 3px 0px var(--soft-pink); transition: 0.1s; display: inline-block; text-decoration: none;
+        }
+
+        .nav-btn:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px transparent; }
+        .nav-btn.active { background: var(--hot-pink); color: white; }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 0 15px; }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: popUp 0.3s ease; }
+        @keyframes popUp { 0% { transform: scale(0.98); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* CARDS TRAINEES */
+        .trainee-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .t-card {
+            border: 2px dashed var(--soft-pink); background: #fff; padding: 10px;
+            text-align: center; border-radius: 10px; transition: 0.2s; position: relative; cursor: pointer;
+        }
+        .t-card:hover { border-style: solid; border-color: var(--hot-pink); background: var(--bg-pink); transform: translateY(-5px); }
+        .t-card.eliminated { filter: grayscale(1); opacity: 0.6; }
+        .t-card.selected { border: 4px solid var(--hot-pink); background: var(--bg-pink); transform: scale(1.05); box-shadow: 0px 5px 15px rgba(255, 102, 163, 0.4); z-index: 2; }
+        
+        .t-photo { width: 100%; aspect-ratio: 1/1; object-fit: cover; border: 2px solid var(--hot-pink); border-radius: 5px; margin-bottom: 8px; background: #eee; }
+        .t-card.selected .t-photo { border-width: 4px; }
+        
+        .t-name { font-weight: 700; font-size: 14px; color: var(--hot-pink); line-height: 1.2; }
+        .t-co { font-size: 11px; color: #999; margin-top: 4px; }
+        .rank-stamp {
+            position: absolute; top: 5px; left: 5px; width: 26px; height: 26px; border-radius: 50%; color: white;
+            font-family: 'DotGothic16', sans-serif; display: flex; align-items: center; justify-content: center;
+            border: 2px solid white; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); z-index: 3;
+        }
+        
+        .voted-stamp {
+            margin-top: 10px; color: var(--hot-pink); font-weight: bold; font-size: 12px;
+            background: white; border: 2px solid var(--hot-pink); border-radius: 10px; padding: 2px 5px;
+        }
+
+        /* INPUTS E SELECTS */
+        .cute-input {
+            width: 100%; padding: 12px; border: 2px solid var(--soft-pink); border-radius: 15px;
+            font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 14px; outline: none;
+            margin-bottom: 15px; background: #fffafa; color: var(--hot-pink);
+        }
+        .cute-input:focus { border-color: var(--hot-pink); }
+        .cute-select {
+            padding: 8px 15px; border: 2px solid var(--hot-pink); border-radius: 15px;
+            font-family: 'DotGothic16', sans-serif; font-size: 16px; background: white; color: var(--hot-pink);
+            outline: none; cursor: pointer; box-shadow: 2px 2px 0px var(--soft-pink);
+        }
+
+        /* PIRÂMIDE DE RANKING */
+        .pyramid-wrap { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 10px; }
+        .pyr-row { display: flex; justify-content: center; gap: 15px; }
+        .pyr-slot {
+            width: 90px; background: white; border: 2px solid var(--hot-pink); border-radius: 10px;
+            padding: 5px; text-align: center; position: relative; box-shadow: 3px 3px 0px var(--soft-pink);
+        }
+        .hidden-placeholder { visibility: hidden; pointer-events: none; }
+        .pyr-photo { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 5px; border: 1px solid #eee; background: #eee; }
+        .pyr-name { font-family: 'DotGothic16', sans-serif; font-size: 13px; color: var(--hot-pink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 5px; }
+        .pyr-pos {
+            position: absolute; top: -10px; right: -10px; background: var(--kawaii-yellow);
+            border: 2px solid var(--hot-pink); color: var(--hot-pink); width: 25px; height: 25px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'DotGothic16', sans-serif; font-weight: bold; z-index: 5;
+        }
+        .pyr-slot.top1 { transform: scale(1.15); margin-bottom: 10px; border-color: #ffcc00; box-shadow: 3px 3px 0px #ffcc00; }
+        .pyr-slot.top1 .pyr-pos { background: #ffcc00; color: white; border-color: white; }
+
+        /* MODAIS GERAIS */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(255,182,193,0.8);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: white; border: 4px dashed var(--hot-pink); border-radius: 20px; padding: 30px; text-align: center;
+            box-shadow: 5px 5px 0px var(--hot-pink); max-width: 350px; width: 90%; max-height: 90vh; overflow-y: auto;
+        }
+
+        .history-list {
+            list-style: none; padding: 0; margin-top: 10px;
+            background: #fffafa; border: 2px solid var(--soft-pink); border-radius: 8px;
+            text-align: left; font-size: 13px; max-height: 120px; overflow-y: auto;
+        }
+        .history-list li { padding: 8px 12px; border-bottom: 1px dashed var(--soft-pink); display: flex; justify-content: space-between; }
+        .history-list li:last-child { border-bottom: none; }
+
+        /* TELA DE LOADING INICIAL */
+
+        html { scroll-behavior: smooth; }
+        body {
+            color: var(--ink);
+            cursor: default;
+            overflow-x: hidden;
+            padding-bottom: 80px;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: .25;
+            z-index: -1;
+            pointer-events: none;
+        }
+        body::before { background: var(--kawaii-blue); top: -120px; left: -100px; }
+        body::after { background: var(--soft-pink); right: -120px; bottom: -80px; }
+
+        button, input, select { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible, input:focus-visible, select:focus-visible, .t-card:focus-visible {
+            outline: 3px solid var(--kawaii-blue);
+            outline-offset: 3px;
+        }
+
+        .marquee-top {
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 0 rgba(255,255,255,.75);
+        }
+
+        .navbar {
+            position: sticky;
+            top: 12px;
+            z-index: 900;
+            width: fit-content;
+            max-width: calc(100% - 24px);
+            margin: 22px auto 28px;
+            padding: 7px;
+            background: rgba(255,255,255,.82);
+            border: 2px solid rgba(255,102,163,.35);
+            border-radius: 28px;
+            box-shadow: 0 12px 30px rgba(116,66,88,.12), 4px 4px 0 var(--soft-pink);
+            backdrop-filter: blur(16px);
+        }
+        .navbar .nav-btn {
+            margin: 0 2px;
+            min-width: 112px;
+            box-shadow: none;
+            border-color: transparent;
+            background: transparent;
+        }
+        .navbar .nav-btn:hover { background: var(--bg-pink); border-color: var(--soft-pink); transform: translateY(-1px); }
+        .navbar .nav-btn.active {
+            background: linear-gradient(135deg, var(--hot-pink), #ff8abd);
+            border-color: white;
+            box-shadow: 0 5px 14px rgba(255,102,163,.28);
+        }
+
+        .container { max-width: 980px; padding: 0 20px; }
+        .kawaii-window {
+            border-width: 2px;
+            border-radius: 18px;
+            box-shadow: 8px 8px 0 rgba(255,179,209,.85), 0 18px 45px rgba(117,70,90,.11);
+            background: var(--panel);
+        }
+        .window-header {
+            min-height: 46px;
+            padding: 10px 16px;
+            background: linear-gradient(90deg, var(--hot-pink), #ff86bb 58%, #ff9fc8);
+            font-size: 17px;
+        }
+        .window-header::after {
+            content: "●  ●  ●";
+            font-size: 9px;
+            letter-spacing: 2px;
+            opacity: .75;
+        }
+        .window-header > span:last-child { display: none; }
+        .window-content { padding: clamp(18px, 3vw, 30px); }
+
+        .nav-btn {
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+        }
+        .nav-btn:hover { transform: translateY(-2px); }
+        .nav-btn:disabled { opacity: .48; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .search-wrap, .vote-search-wrap { position: relative; }
+        .search-wrap > i, .vote-search-wrap > i {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            z-index: 2;
+            color: var(--hot-pink);
+            pointer-events: none;
+        }
+        .search-wrap .cute-input, .vote-search-wrap .cute-input { padding-left: 42px; }
+        .cute-input {
+            min-height: 48px;
+            margin-bottom: 18px;
+            border-color: rgba(255,179,209,.95);
+            box-shadow: inset 0 1px 0 white, 0 6px 18px rgba(255,102,163,.07);
+        }
+        .cute-input:focus { box-shadow: 0 0 0 4px rgba(153,204,255,.24); }
+        .cute-select { max-width: 100%; }
+
+        .trainee-grid {
+            grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+            gap: 14px;
+        }
+        .t-card {
+            min-width: 0;
+            padding: 8px;
+            border-style: solid;
+            border-color: rgba(255,179,209,.72);
+            border-radius: 14px;
+            box-shadow: 0 7px 18px rgba(255,102,163,.08);
+            overflow: hidden;
+            isolation: isolate;
+        }
+        .t-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 55%, rgba(153,204,255,.14));
+            opacity: 0;
+            transition: opacity .2s ease;
+            pointer-events: none;
+        }
+        .t-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(255,102,163,.16); }
+        .t-card:hover::after { opacity: 1; }
+        .t-card.selected {
+            border-width: 3px;
+            transform: translateY(-3px) scale(1.015);
+            box-shadow: 0 0 0 4px rgba(255,102,163,.12), 0 12px 28px rgba(255,102,163,.22);
+        }
+        .t-photo { border-width: 1px; border-radius: 10px; margin-bottom: 7px; }
+        .t-card.selected .t-photo { border-width: 2px; }
+        .t-name { font-size: 13px; min-height: 32px; display: flex; align-items: center; justify-content: center; }
+        .t-co { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rank-stamp { top: 7px; left: 7px; width: 25px; height: 25px; font-size: 12px; }
+        .voted-stamp { margin-top: 7px; font-size: 10px; padding: 3px 5px; animation: selectedPulse .35s ease; }
+        @keyframes selectedPulse { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* A urna continua 1-Pick e no mesmo formato, agora sempre acessível. */
+        .vote-sticky-panel {
+            position: sticky;
+            top: 104px;
+            z-index: 40;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 14px;
+            padding: 12px;
+            margin: -4px 0 20px;
+            border: 2px solid rgba(255,102,163,.48);
+            border-radius: 18px;
+            background: rgba(255,255,255,.9);
+            box-shadow: 0 12px 30px rgba(98,52,73,.14), 4px 4px 0 rgba(255,179,209,.72);
+            backdrop-filter: blur(18px);
+        }
+        #selected-trainee-display > div {
+            min-height: 104px !important;
+            height: 100%;
+        }
+        .selected-pick-card {
+            display: grid !important;
+            grid-template-columns: 74px minmax(0, 1fr);
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 10px 14px !important;
+            text-align: left;
+        }
+        .selected-pick-card img { width: 74px !important; height: 74px !important; }
+        .selected-pick-copy { min-width: 0; }
+        .selected-pick-copy .pixel-text { margin: 0 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .selected-pick-copy small { display: block; margin-top: 4px; color: #9b7487; }
+        .vote-submit-wrap { display: flex; align-items: center; justify-content: center; }
+        .vote-submit {
+            min-width: 205px;
+            margin: 0;
+            padding: 13px 18px;
+            color: white;
+            background: linear-gradient(135deg, var(--hot-pink), #ff86bb);
+            border-color: white;
+            box-shadow: 4px 4px 0 var(--soft-pink);
+        }
+        .vote-grid {
+            max-height: none;
+            overflow: visible;
+            padding: 2px 2px 12px;
+            scroll-margin-top: 240px;
+        }
+
+        /* Pirâmide ajusta o tamanho sem perder a composição 1 / 2 / 4 / 5. */
+        .pyramid-wrap {
+            --slot-size: clamp(68px, 10.2vw, 96px);
+            gap: clamp(10px, 2vw, 16px);
+            width: 100%;
+            overflow: visible;
+            padding: 16px 8px 6px;
+        }
+        .pyr-row { gap: clamp(7px, 1.8vw, 15px); max-width: 100%; }
+        .pyr-slot {
+            width: var(--slot-size);
+            flex: 0 0 var(--slot-size);
+            border-radius: 13px;
+            padding: 5px;
+            transition: transform .18s ease, box-shadow .18s ease;
+        }
+        .pyr-slot:hover { transform: translateY(-4px); box-shadow: 5px 7px 0 var(--soft-pink); }
+        .pyr-slot.top1:hover { transform: translateY(-4px) scale(1.15); }
+        .pyr-name { font-size: clamp(10px, 1.8vw, 13px); }
+        .pyr-pos { width: 26px; height: 26px; font-size: 12px; }
+        #ranking-pagination { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+        #ranking-pagination .nav-btn { margin: 0 !important; }
+
+        .modal-overlay {
+            padding: 18px;
+            background: rgba(87,51,69,.38);
+            backdrop-filter: blur(8px);
+            animation: modalFade .2s ease;
+        }
+        @keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
+        .modal-box { box-shadow: 7px 7px 0 var(--hot-pink), 0 24px 60px rgba(78,45,61,.24); }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            padding: 34px 20px;
+            text-align: center;
+            border: 2px dashed var(--soft-pink);
+            border-radius: 14px;
+            background: white;
+            color: #a77c90;
+        }
+
+        @media (max-width: 720px) {
+            body { padding-bottom: calc(84px + var(--safe-bottom)); }
+            .marquee-top { font-size: 13px; }
+            .container { padding: 0 10px; }
+            .kawaii-window { border-radius: 15px; box-shadow: 5px 5px 0 var(--soft-pink); }
+            .window-header { font-size: 14px; min-height: 42px; }
+            .window-content { padding: 15px; }
+
+            .navbar {
+                position: fixed;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 7px 8px calc(7px + var(--safe-bottom));
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                border-left: 0;
+                border-right: 0;
+                border-bottom: 0;
+                border-radius: 22px 22px 0 0;
+                box-shadow: 0 -10px 32px rgba(82,45,63,.18);
+                background: rgba(255,255,255,.96);
+                backdrop-filter: blur(20px);
+            }
+            .navbar .nav-btn {
+                min-width: 0;
+                min-height: 54px;
+                margin: 0;
+                padding: 7px 4px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 3px;
+                border-radius: 16px;
+                font-size: 11px;
+                line-height: 1;
+            }
+            .navbar .nav-btn i { font-size: 17px; }
+
+            .trainee-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+            .t-card { padding: 5px; border-radius: 10px; }
+            .t-photo { margin-bottom: 5px; border-radius: 7px; }
+            .t-name { font-size: 10.5px; min-height: 27px; }
+            .t-co { font-size: 8.5px; }
+            .rank-stamp { width: 21px; height: 21px; font-size: 10px; top: 4px; left: 4px; }
+            .voted-stamp { font-size: 8px; margin-top: 4px; }
+
+            .vote-sticky-panel {
+                top: 8px;
+                grid-template-columns: minmax(0, 1fr);
+                gap: 8px;
+                padding: 8px;
+                margin-bottom: 14px;
+                border-radius: 15px;
+            }
+            #selected-trainee-display { min-height: 78px !important; }
+            #selected-trainee-display > div { min-height: 76px !important; }
+            .selected-pick-card { grid-template-columns: 58px minmax(0,1fr); gap: 10px; padding: 7px 10px !important; }
+            .selected-pick-card img { width: 58px !important; height: 58px !important; }
+            .selected-pick-copy .pixel-text { font-size: 18px !important; }
+            .selected-pick-copy small { font-size: 10px; }
+            .vote-submit { width: 100%; min-width: 0; padding: 10px 12px; font-size: 14px; }
+
+            .pyramid-wrap { --slot-size: clamp(53px, 17vw, 73px); padding-inline: 0; }
+            .pyr-row { gap: 5px; }
+            .pyr-slot { padding: 3px; border-radius: 9px; box-shadow: 2px 2px 0 var(--soft-pink); }
+            .pyr-pos { width: 21px; height: 21px; top: -8px; right: -6px; font-size: 10px; }
+            .pyr-name { font-size: 8.5px; margin-top: 3px; }
+            .pyr-slot.top1 { margin-bottom: 4px; }
+
+            .cute-select { width: 100%; margin-top: 9px; }
+            #view-ranking .window-content > div[style*="text-align: center"] label { display: block; margin-right: 0 !important; }
+        }
+
+        @media (max-width: 370px) {
+            .trainee-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .pyramid-wrap { --slot-size: 52px; }
+            .pyr-row { gap: 3px; }
+        }
+
+        .local-file-warning {
+            display: none;
+            max-width: 980px;
+            margin: 12px auto 0;
+            padding: 10px 14px;
+            border: 2px dashed #f0a000;
+            border-radius: 12px;
+            color: #765100;
+            background: #fff8d8;
+            font-size: 12px;
+            text-align: center;
+        }
+        .local-file-warning.show { display: block; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="marquee-top">
+        <marquee scrollamount="6"><i class="fas fa-star"></i> Bem-vindos ao PRODUCE 48 RPG! Agora podes consultar o ranking completo e semanas anteriores na aba Ranking! <i class="fas fa-star"></i></marquee>
+    </div>
+    <div id="local-file-warning" class="local-file-warning">
+        <i class="fas fa-triangle-exclamation"></i>
+        Este arquivo foi aberto diretamente pelo computador. Para evitar bloqueios do navegador, abra o projeto por um servidor local ou hospedagem HTTPS.
+    </div>
+
+    <div class="navbar">
+        <button class="nav-btn nav-main active" data-view="view-home" aria-current="page" onclick="switchView('view-home', this)"><i class="fas fa-home"></i><span>Home</span></button>
+        <button class="nav-btn nav-main" data-view="view-trainees" onclick="switchView('view-trainees', this)"><i class="fas fa-user-graduate"></i><span>Trainees</span></button>
+        <button class="nav-btn nav-main" data-view="view-ranking" onclick="switchView('view-ranking', this)"><i class="fas fa-crown"></i><span>Ranking</span></button>
+        <button class="nav-btn nav-main" data-view="view-vote" onclick="switchView('view-vote', this)"><i class="fas fa-vote-yea"></i><span>Votar</span></button>
+    </div>
+
+    <main class="container">
+
+        <div id="view-home" class="view-section active">
+            <div class="kawaii-window">
+                <div class="window-header">
+                    <span><i class="fas fa-terminal"></i> Welcome.exe</span>
+                    <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="window-content" style="text-align: center;">
+                    <h1 style="color: var(--hot-pink); font-size: 40px; text-shadow: 3px 3px 0px var(--kawaii-yellow); margin-bottom: 20px;">PRODUCE 48 RPG</h1>
+                    
+                    <p style="font-size: 16px; line-height: 1.8; margin-bottom: 20px;">
+                        Olá, <strong>Produtor Nacional</strong>! <i class="fas fa-smile-beam" style="color: var(--hot-pink);"></i><br>
+                        Entrámos na fase do <strong>1-PICK</strong>! Escolha e salve a sua favorita.<br>
+                        Confira também o sistema de <strong>Ranking Histórico</strong> na aba acima!<br><small id="db-status" style="color:#888;"><i class="fas fa-circle-notch fa-spin"></i> Carregando dados oficiais...</small>
+                    </p>
+
+                    <div style="background: var(--kawaii-yellow); border: 2px dashed var(--hot-pink); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <span class="pixel-text" style="font-size: 20px; color: var(--hot-pink);"><i class="fas fa-sparkles"></i> O SEU VOTO MUDA O DESTINO! <i class="fas fa-sparkles"></i></span>
+                    </div>
+
+                    <button class="nav-btn" style="background: var(--hot-pink); color: white;" onclick="goToView('view-vote')"><i class="fas fa-heart"></i> Quero Votar</button>
+                    <a class="nav-btn" href="produce48_rpg_inscricao_temporada.html"><i class="fas fa-id-card"></i> Quero me inscrever</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-trainees" class="view-section">
+            <div class="kawaii-window">
+                <div class="window-header">
+                    <span><i class="fas fa-file-alt"></i> Trainees.txt</span>
+                    <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="window-content">
+                    <div class="search-wrap"><i class="fas fa-search"></i><input type="text" id="search-part" class="cute-input" placeholder="Pesquisar por nome ou empresa..." oninput="renderTrainees()"></div>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <label style="cursor: pointer; font-size: 14px; font-weight: bold; color: var(--hot-pink);">
+                            <input type="checkbox" id="filter-elim" onchange="renderTrainees()" style="accent-color: var(--hot-pink);"> Mostrar Eliminadas <i class="fas fa-heart-broken"></i>
+                        </label>
+                    </div>
+                    <div class="trainee-grid" id="trainee-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-ranking" class="view-section">
+            <div class="kawaii-window">
+                <div class="window-header">
+                    <span><i class="fas fa-chart-bar"></i> Ranking_Global.exe</span>
+                    <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="window-content">
+                    <h2 style="text-align: center; color: var(--hot-pink); margin-bottom: 10px;"><i class="fas fa-crown"></i> A Pirâmide do Sucesso <i class="fas fa-crown"></i></h2>
+                    
+                    <div style="text-align: center; margin-bottom: 20px; background: var(--bg-pink); padding: 15px; border-radius: 10px; border: 2px dashed var(--soft-pink);">
+                        <label style="color: var(--hot-pink); font-weight: bold; font-family: 'DotGothic16'; font-size: 18px; margin-right: 10px;">Visualizar Ranking:</label>
+                        <select id="week-selector" class="cute-select" onchange="changeRankingWeek(this.value)">
+                            <option value="atual">Semana Atual (Geral)</option>
+                            </select>
+                    </div>
+                    
+                    <div class="pyramid-wrap" id="ranking-pyramid"></div>
+                    
+                    <div id="ranking-pagination" style="text-align: center; margin-top: 30px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-vote" class="view-section">
+            <div class="kawaii-window">
+                <div class="window-header">
+                    <span><i class="fas fa-box-open"></i> Urna_Eletronica.bat</span>
+                    <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
+                </div>
+                <div class="window-content">
+                    
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h2 class="pixel-text" style="font-size: 30px; color: var(--hot-pink);">Meu 1-Pick ♡</h2>
+                        <p style="font-size: 14px; color: var(--text-dark);">Escolha com cuidado a trainee que deseja salvar! O voto será registrado na contagem oficial.</p>
+                    </div>
+
+                    <div class="vote-sticky-panel" aria-live="polite">
+                        <div id="selected-trainee-display" style="text-align: center; min-height: 132px;"></div>
+                        <div class="vote-submit-wrap">
+                            <button class="nav-btn vote-submit" id="btn-submit" disabled onclick="submitVote()"><i class="fas fa-paper-plane"></i> Selecione sua 1-Pick</button>
+                        </div>
+                    </div>
+
+                    <div class="vote-search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-vote" class="cute-input" placeholder="Procurar trainee para votar..." oninput="renderVoteList()">
+                    </div>
+                    <div class="trainee-grid vote-grid" id="vote-grid"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div class="modal-overlay" id="modal">
+        <div class="modal-box">
+            <h3 id="modal-title" class="pixel-text" style="font-size: 28px; color: var(--hot-pink); margin-bottom: 15px;"></h3>
+            <p id="modal-body" style="margin-bottom: 20px; font-size: 14px; font-weight: bold; color: #555;"></p>
+            <button class="nav-btn" style="background: var(--hot-pink); color: white;" onclick="closeModal()"><i class="fas fa-check"></i> Fechar</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="trainee-modal">
+        <div class="kawaii-window" style="max-width: 400px; width: 90%; margin: auto; box-shadow: 8px 8px 0px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;">
+            <div class="window-header">
+                <span><i class="fas fa-id-card"></i> Perfil_Trainee.exe</span>
+                <span style="cursor:pointer" onclick="closeTraineeModal()"><i class="fas fa-times"></i></span>
+            </div>
+            <div class="window-content" style="text-align: center; background: white;">
+                
+                <img id="tm-photo" src="" style="width: 140px; height: 140px; border-radius: 10px; border: 4px solid var(--hot-pink); object-fit: cover; margin-bottom: 15px; box-shadow: 4px 4px 0px var(--soft-pink);">
+                
+                <h2 id="tm-name" class="pixel-text" style="color: var(--hot-pink); font-size: 32px; margin-bottom: 5px; text-shadow: 2px 2px 0px var(--kawaii-yellow);"></h2>
+                
+                <div style="background: var(--bg-pink); border: 2px dashed var(--hot-pink); border-radius: 10px; padding: 15px; text-align: left; font-size: 14px; margin-bottom: 15px;">
+                    <p style="margin-bottom: 8px;"><strong><i class="fas fa-building"></i> Agência:</strong> <span id="tm-company" style="color: var(--text-dark);"></span></p>
+                    <p style="margin-bottom: 8px;"><strong><i class="fas fa-birthday-cake"></i> Nascimento:</strong> <span id="tm-year" style="color: var(--text-dark);"></span></p>
+                    <p style="margin-bottom: 8px;"><strong><i class="fas fa-star"></i> Avaliação:</strong> Classe <strong id="tm-rank" style="text-transform: uppercase; color: var(--hot-pink);"></strong></p>
+                    <p><strong><i class="fas fa-info-circle"></i> Status:</strong> <span id="tm-status" style="font-weight: bold;"></span></p>
+                </div>
+
+                <div style="text-align: left; margin-bottom: 20px;">
+                    <h4 style="color: var(--hot-pink); margin-bottom: 5px; font-family: 'DotGothic16'; font-size: 18px;"><i class="fas fa-chart-line"></i> Histórico de Posições</h4>
+                    <ul id="tm-history" class="history-list"></ul>
+                </div>
+                
+                <button class="nav-btn" style="background: var(--hot-pink); color: white; width: 100%; margin: 0;" onclick="closeTraineeModal()"><i class="fas fa-check"></i> Fechar Perfil</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // DADOS LOCAIS — SEM BANCO DE DADOS
+        // Edite esta lista para substituir as participantes demonstrativas.
+        // ==========================================
+        const LOCAL_TRAINEES = [{"id":1,"name":"Luna Park","co":"Aurora Label","rank":"A","elim":false,"cr":1,"yr":2006,"img":null,"historico":[{"semana":1,"pos":2},{"semana":2,"pos":1},{"semana":3,"pos":1},{"semana":4,"pos":1}]},{"id":2,"name":"Miyu Kato","co":"Bloom Japan","rank":"A","elim":false,"cr":2,"yr":2007,"img":null,"historico":[{"semana":1,"pos":4},{"semana":2,"pos":3},{"semana":3,"pos":2},{"semana":4,"pos":2}]},{"id":3,"name":"Sofia Almeida","co":"Nova Brasil","rank":"B","elim":false,"cr":3,"yr":2005,"img":null,"historico":[{"semana":1,"pos":1},{"semana":2,"pos":5},{"semana":3,"pos":4},{"semana":4,"pos":3}]},{"id":4,"name":"Nari Kim","co":"Cherry Seoul","rank":"A","elim":false,"cr":4,"yr":2008,"img":null,"historico":[{"semana":1,"pos":3},{"semana":2,"pos":2},{"semana":3,"pos":6},{"semana":4,"pos":4}]},{"id":5,"name":"Chloe Martin","co":"Maison Pop","rank":"B","elim":false,"cr":5,"yr":2004,"img":null,"historico":[{"semana":1,"pos":5},{"semana":2,"pos":4},{"semana":3,"pos":3},{"semana":4,"pos":5}]},{"id":6,"name":"Hana Sato","co":"Bloom Japan","rank":"A","elim":false,"cr":6,"yr":2006,"img":null,"historico":[{"semana":1,"pos":7},{"semana":2,"pos":6},{"semana":3,"pos":5},{"semana":4,"pos":6}]},{"id":7,"name":"Mei Lin","co":"Galaxy C-POP","rank":"B","elim":false,"cr":7,"yr":2007,"img":null,"historico":[{"semana":1,"pos":9},{"semana":2,"pos":8},{"semana":3,"pos":7},{"semana":4,"pos":7}]},{"id":8,"name":"Aisha Rahman","co":"Moonlight MY","rank":"B","elim":false,"cr":8,"yr":2005,"img":null,"historico":[{"semana":1,"pos":6},{"semana":2,"pos":10},{"semana":3,"pos":9},{"semana":4,"pos":8}]},{"id":9,"name":"Yuna Choi","co":"Cherry Seoul","rank":"A","elim":false,"cr":9,"yr":2009,"img":null,"historico":[{"semana":1,"pos":8},{"semana":2,"pos":7},{"semana":3,"pos":11},{"semana":4,"pos":9}]},{"id":10,"name":"Emma Wilson","co":"North Star","rank":"B","elim":false,"cr":10,"yr":2004,"img":null,"historico":[{"semana":1,"pos":10},{"semana":2,"pos":9},{"semana":3,"pos":8},{"semana":4,"pos":10}]},{"id":11,"name":"Rina Okabe","co":"Pixel Japan","rank":"C","elim":false,"cr":11,"yr":2008,"img":null,"historico":[{"semana":1,"pos":12},{"semana":2,"pos":11},{"semana":3,"pos":10},{"semana":4,"pos":11}]},{"id":12,"name":"Isabella Cruz","co":"Halo Manila","rank":"B","elim":false,"cr":12,"yr":2006,"img":null,"historico":[{"semana":1,"pos":14},{"semana":2,"pos":13},{"semana":3,"pos":12},{"semana":4,"pos":12}]},{"id":13,"name":"Jiwon Lee","co":"Aurora Label","rank":"B","elim":false,"cr":13,"yr":2003,"img":null,"historico":[{"semana":1,"pos":11},{"semana":2,"pos":15},{"semana":3,"pos":14},{"semana":4,"pos":13}]},{"id":14,"name":"Noa Tanaka","co":"Pixel Japan","rank":"B","elim":false,"cr":14,"yr":2007,"img":null,"historico":[{"semana":1,"pos":13},{"semana":2,"pos":12},{"semana":3,"pos":16},{"semana":4,"pos":14}]},{"id":15,"name":"Valentina Ruiz","co":"Luna MX","rank":"C","elim":false,"cr":15,"yr":2005,"img":null,"historico":[{"semana":1,"pos":15},{"semana":2,"pos":14},{"semana":3,"pos":13},{"semana":4,"pos":15}]},{"id":16,"name":"Aria Singh","co":"Prism India","rank":"B","elim":false,"cr":16,"yr":2006,"img":null,"historico":[{"semana":1,"pos":17},{"semana":2,"pos":16},{"semana":3,"pos":15},{"semana":4,"pos":16}]},{"id":17,"name":"Mina Jeong","co":"Cherry Seoul","rank":"C","elim":false,"cr":17,"yr":2008,"img":null,"historico":[{"semana":1,"pos":19},{"semana":2,"pos":18},{"semana":3,"pos":17},{"semana":4,"pos":17}]},{"id":18,"name":"Zoe Chen","co":"Neon Taipei","rank":"B","elim":false,"cr":18,"yr":2004,"img":null,"historico":[{"semana":1,"pos":16},{"semana":2,"pos":20},{"semana":3,"pos":19},{"semana":4,"pos":18}]},{"id":19,"name":"Olivia Brown","co":"Dream AU","rank":"C","elim":true,"cr":19,"yr":2007,"img":null,"historico":[{"semana":1,"pos":18},{"semana":2,"pos":17},{"semana":3,"pos":21},{"semana":4,"pos":19}]},{"id":20,"name":"Camila Torres","co":"Sol Chile","rank":"C","elim":true,"cr":20,"yr":2005,"img":null,"historico":[{"semana":1,"pos":20},{"semana":2,"pos":19},{"semana":3,"pos":18},{"semana":4,"pos":20}]},{"id":21,"name":"Aya Nakamura","co":"Bloom Japan","rank":"C","elim":true,"cr":21,"yr":2009,"img":null,"historico":[{"semana":1,"pos":22},{"semana":2,"pos":21},{"semana":3,"pos":20},{"semana":4,"pos":21}]},{"id":22,"name":"Leah Davis","co":"Orbit USA","rank":"C","elim":true,"cr":22,"yr":2003,"img":null,"historico":[{"semana":1,"pos":24},{"semana":2,"pos":23},{"semana":3,"pos":22},{"semana":4,"pos":22}]},{"id":23,"name":"Thalia Costa","co":"Atlantic PT","rank":"D","elim":true,"cr":23,"yr":2006,"img":null,"historico":[{"semana":1,"pos":21},{"semana":2,"pos":24},{"semana":3,"pos":24},{"semana":4,"pos":23}]},{"id":24,"name":"Sena Mori","co":"Pixel Japan","rank":"C","elim":true,"cr":24,"yr":2008,"img":null,"historico":[{"semana":1,"pos":23},{"semana":2,"pos":22},{"semana":3,"pos":24},{"semana":4,"pos":24}]}];
+
+        // ==========================================
+        // SUPABASE — banco compartilhado pelo site e pelas inscrições
+        // A chave publishable/anon pode ficar no navegador. Nunca use a service_role aqui.
+        // ==========================================
+        const SUPABASE_URL = "https://ykkwsxismfvqujfwfimj.supabase.co";
+        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Xyhc8jE-rp9PL_y9wH1IQQ_ljfPBJcZ";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+        let usandoDadosDemonstrativos = false;
+
+        function formatSupabaseError(error) {
+            if (!error) return 'Erro desconhecido';
+            const parts = [
+                error.message,
+                error.details ? `Detalhes: ${error.details}` : '',
+                error.hint ? `Sugestão: ${error.hint}` : '',
+                error.code ? `Código: ${error.code}` : ''
+            ].filter(Boolean);
+            return parts.join(' | ');
+        }
+
+        function showLocalFileWarning() {
+            const warning = document.getElementById('local-file-warning');
+            if (warning && window.location.protocol === 'file:') warning.classList.add('show');
+        }
+
+        document.addEventListener('DOMContentLoaded', showLocalFileWarning);
+
+        // Estado Global
+        let T = [...LOCAL_TRAINEES];
+        let selectedVoteId = null;
+        let availableWeeks = [];
+        let currentRankingWeek = 'atual';
+
+        function prepararInterface() {
+            const weeksSet = new Set();
+            T.forEach(t => (t.historico || []).forEach(h => {
+                if (h.semana) weeksSet.add(h.semana);
+            }));
+            availableWeeks = Array.from(weeksSet).sort((a, b) => b - a);
+            populateWeekSelector();
+            window.renderTrainees();
+            window.renderRanking(1);
+            window.renderVoteList();
+            window.renderSelectedVoteDisplay();
+        }
+
+        function atualizarStatusBanco(message, ok = true) {
+            const status = document.getElementById('db-status');
+            if (!status) return;
+            status.style.color = ok ? '#2f8b63' : '#a06b21';
+            status.innerHTML = ok
+                ? `<i class="fas fa-cloud"></i> ${escapeHTML(message)}`
+                : `<i class="fas fa-triangle-exclamation"></i> ${escapeHTML(message)}`;
+        }
+
+        async function carregarTraineesDoBanco() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('trainees')
+                    .select('id,nome,empresa,classe,eliminada,rank_atual,ano_nascimento,foto_url,historico')
+                    .order('rank_atual', { ascending: true });
+
+                if (error) throw error;
+
+                T = (data || []).map(row => ({
+                    id: row.id,
+                    name: row.nome,
+                    co: row.empresa,
+                    rank: row.classe,
+                    elim: Boolean(row.eliminada),
+                    cr: row.rank_atual,
+                    yr: row.ano_nascimento,
+                    img: row.foto_url,
+                    historico: Array.isArray(row.historico) ? row.historico : []
+                }));
+
+                usandoDadosDemonstrativos = false;
+                atualizarStatusBanco(
+                    T.length ? `${T.length} trainees carregadas do Supabase` : 'Banco conectado, mas ainda não há trainees cadastradas'
+                );
+            } catch (error) {
+                console.error('Falha ao carregar o Supabase:', error);
+                T = [...LOCAL_TRAINEES];
+                usandoDadosDemonstrativos = true;
+                atualizarStatusBanco('Banco indisponível — mostrando participantes demonstrativas', false);
+            } finally {
+                prepararInterface();
+            }
+        }
+
+        // ==========================================
+        // UI & NAVEGAÇÃO
+        // ==========================================
+        window.switchView = function(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.navbar .nav-main').forEach(el => {
+                el.classList.remove('active');
+                el.removeAttribute('aria-current');
+            });
+            const view = document.getElementById(viewId);
+            if (!view) return;
+            view.classList.add('active');
+            if(element) {
+                element.classList.add('active');
+                element.setAttribute('aria-current', 'page');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.goToView = function(viewId) {
+            const target = document.querySelector(`.navbar .nav-main[data-view="${viewId}"]`);
+            window.switchView(viewId, target);
+        };
+
+        window.closeModal = function() { document.getElementById('modal').classList.remove('show'); };
+        window.showModal = function(title, body) {
+            document.getElementById('modal-title').innerHTML = title;
+            document.getElementById('modal-body').innerHTML = body;
+            document.getElementById('modal').classList.add('show');
+        };
+
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            })[char]);
+        }
+
+        function escapeAttr(value) { return escapeHTML(value); }
+
+        function getSafeImgTag(t, cssClass) {
+            const safeName = encodeURIComponent(t.name || 'Unknown');
+            const fallback = `https://ui-avatars.com/api/?name=${safeName}&background=ffb3d1&color=fff&size=150`;
+            const primarySrc = t.img ? t.img : fallback;
+            return `<img src="${escapeAttr(primarySrc)}" class="${escapeAttr(cssClass)}" alt="Foto de ${escapeAttr(t.name || 'trainee')}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${fallback}';">`;
+        }
+
+        window.openTraineeModal = function(id) {
+            const t = T.find(x => x.id === id);
+            if(!t) return;
+            
+            const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=ffb3d1&color=fff&size=150`;
+            const imgEl = document.getElementById('tm-photo');
+            imgEl.src = t.img ? t.img : fallback;
+            imgEl.onerror = function() { this.onerror=null; this.src=fallback; };
+
+            document.getElementById('tm-name').innerText = t.name || "Desconhecida";
+            document.getElementById('tm-company').innerText = t.co || "S/ Agência";
+            document.getElementById('tm-year').innerText = t.yr || "Desconhecido";
+            document.getElementById('tm-rank').innerText = (t.rank || "-").toUpperCase();
+            
+            const statusEl = document.getElementById('tm-status');
+            if(t.elim) {
+                statusEl.innerHTML = "Eliminada <i class='fas fa-heart-broken'></i>";
+                statusEl.style.color = "#999";
+            } else {
+                statusEl.innerHTML = "Sobrevivente! <i class='fas fa-heart' style='color:var(--hot-pink)'></i>";
+                statusEl.style.color = "var(--rank-d)";
+            }
+
+            const histEl = document.getElementById('tm-history');
+            if(t.historico && t.historico.length > 0) {
+                // Ordenar histórico por semana (crescente)
+                const histSorted = [...t.historico].sort((a,b) => a.semana - b.semana);
+                histEl.innerHTML = histSorted.map(h => `
+                    <li>
+                        <span><strong><i class="fas fa-calendar-week"></i> Semana ${h.semana}</strong></span>
+                        <span style="color: var(--hot-pink); font-weight: bold;">Rank ${h.pos}</span>
+                    </li>
+                `).join('');
+            } else {
+                histEl.innerHTML = `<li style="justify-content:center; color:#999;">Sem histórico disponível</li>`;
+            }
+
+            document.getElementById('trainee-modal').classList.add('show');
+        };
+
+        window.closeTraineeModal = function() { document.getElementById('trainee-modal').classList.remove('show'); };
+
+        // ==========================================
+        // RENDERIZAÇÕES PRINCIPAIS
+        // ==========================================
+        window.renderTrainees = function() {
+            const q = document.getElementById('search-part').value.toLowerCase();
+            const showElim = document.getElementById('filter-elim').checked;
+            
+            const html = T.filter(t => {
+                if (t.elim && !showElim) return false;
+                if (q && !(t.name || '').toLowerCase().includes(q) && !(t.co || '').toLowerCase().includes(q)) return false;
+                return true;
+            }).map(t => {
+                const rankClass = t.rank ? `bg-${t.rank.toLowerCase()}` : 'bg-f';
+                const rankLetter = (t.rank || '-').toUpperCase();
+                return `
+                <div class="t-card ${t.elim ? 'eliminated' : ''}" role="button" tabindex="0" onclick="openTraineeModal(${JSON.stringify(t.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTraineeModal(${JSON.stringify(t.id)})}">
+                    <div class="rank-stamp ${rankClass}">${rankLetter}</div>
+                    ${getSafeImgTag(t, 't-photo')}
+                    <div class="t-name">${escapeHTML(t.name || '')}</div>
+                    <div class="t-co">${escapeHTML(t.co || '')}</div>
+                </div>`;
+            }).join('');
+            
+            const grid = document.getElementById('trainee-grid');
+            grid.innerHTML = html || `<div class="empty-state"><i class="fas fa-search"></i><br>Nenhuma trainee encontrada com esses filtros.</div>`;
+        };
+
+        // ==========================================
+        // LÓGICA DO RANKING COMPLETO E PAGINADO
+        // ==========================================
+        function populateWeekSelector() {
+            const selector = document.getElementById('week-selector');
+            if(!selector) return;
+            
+            let html = `<option value="atual">Semana Atual (Geral)</option>`;
+            availableWeeks.forEach(w => {
+                html += `<option value="${w}">Ranking Oficial da Semana ${w}</option>`;
+            });
+            selector.innerHTML = html;
+        }
+
+        window.changeRankingWeek = function(val) {
+            currentRankingWeek = val;
+            window.renderRanking(1); // Sempre volta à página 1 ao mudar de semana
+        };
+
+        // Função que descobre qual o Rank de uma trainee para a semana selecionada
+        function getRankForCurrentContext(t) {
+            if (currentRankingWeek === 'atual') {
+                return t.cr || 999; 
+            }
+            // Busca o histórico da semana escolhida
+            const record = t.historico.find(h => h.semana == currentRankingWeek);
+            return record ? record.pos : 999;
+        }
+
+        window.renderRanking = function(page = 1) {
+            const TRAINEES_PER_PAGE = 12;
+            
+            // Ordenar TODAS as trainees que não estão eliminadas, baseado na semana selecionada
+            const sortedTrainees = [...T].filter(t => currentRankingWeek === 'atual' ? !t.elim : (t.historico || []).some(h => h.semana == currentRankingWeek)).sort((a, b) => {
+                return getRankForCurrentContext(a) - getRankForCurrentContext(b);
+            });
+
+            const totalPages = Math.ceil(sortedTrainees.length / TRAINEES_PER_PAGE) || 1;
+            const startIndex = (page - 1) * TRAINEES_PER_PAGE;
+            const pageTrainees = sortedTrainees.slice(startIndex, startIndex + TRAINEES_PER_PAGE);
+            
+            const layout = [[0], [1, 2], [3, 4, 5, 6], [7, 8, 9, 10, 11]];
+            
+            const html = layout.map(row => `
+                <div class="pyr-row">
+                    ${row.map(i => {
+                        const t = pageTrainees[i];
+                        
+                        if(!t) return `<div class="pyr-slot hidden-placeholder"></div>`; 
+                        
+                        // Descobrir o número que aparece na bolinha
+                        let displayRank = getRankForCurrentContext(t);
+                        if (displayRank === 999) displayRank = "-"; // Não estava rankeada nesta semana
+                        
+                        // O Rank 1 Global na página 1 ganha o troféu/destaque
+                        const isTop1 = (startIndex === 0 && i === 0) ? 'top1' : '';
+                        
+                        return `
+                        <div class="pyr-slot ${isTop1}" role="button" tabindex="0" onclick="openTraineeModal(${JSON.stringify(t.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTraineeModal(${JSON.stringify(t.id)})}">
+                            <div class="pyr-pos">${displayRank}</div>
+                            ${getSafeImgTag(t, 'pyr-photo')}
+                            <div class="pyr-name">${escapeHTML(t.name)}</div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            `).join('');
+            
+            document.getElementById('ranking-pyramid').innerHTML = html;
+
+            // Renderizar Paginação (1-12, 13-24, etc.)
+            let pagHtml = '';
+            for(let i = 1; i <= totalPages; i++) {
+                const isActive = (i === page) ? 'active' : '';
+                const startLabel = ((i - 1) * TRAINEES_PER_PAGE) + 1;
+                const endLabel = Math.min(i * TRAINEES_PER_PAGE, sortedTrainees.length);
+                
+                pagHtml += `<button class="nav-btn ${isActive}" style="padding: 5px 15px; font-size: 14px;" onclick="renderRanking(${i})">Ranks ${startLabel}-${endLabel}</button>`;
+            }
+            document.getElementById('ranking-pagination').innerHTML = pagHtml;
+        };
+
+        // ==========================================
+        // VOTAÇÃO 1-PICK
+        // ==========================================
+        window.renderVoteList = function() {
+            const q = document.getElementById('search-vote').value.toLowerCase();
+            const html = T.filter(t => !t.elim).filter(t => {
+                const name = (t.name || '').toLowerCase();
+                const co = (t.co || '').toLowerCase();
+                return !q || name.includes(q) || co.includes(q);
+            }).map(t => {
+                const isSelected = selectedVoteId === t.id;
+                const rankClass = t.rank ? `bg-${t.rank.toLowerCase()}` : 'bg-f';
+                const rankLetter = (t.rank || '-').toUpperCase();
+                
+                return `
+                <div class="t-card ${isSelected ? 'selected' : ''}" role="button" tabindex="0" aria-pressed="${isSelected}" onclick="toggleVote(${JSON.stringify(t.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleVote(${JSON.stringify(t.id)})}">
+                    <div class="rank-stamp ${rankClass}">${rankLetter}</div>
+                    ${getSafeImgTag(t, 't-photo')}
+                    <div class="t-name">${escapeHTML(t.name || '')}</div>
+                    <div class="t-co">${escapeHTML(t.co || '')}</div>
+                    ${isSelected ? '<div class="voted-stamp"><i class="fas fa-heart"></i> MINHA PICK</div>' : ''}
+                </div>`;
+            }).join('');
+            document.getElementById('vote-grid').innerHTML = html || `<div class="empty-state"><i class="fas fa-heart-broken"></i><br>Nenhuma trainee disponível para essa busca.</div>`;
+            updateVoteButtonState();
+        };
+
+        window.renderSelectedVoteDisplay = function() {
+            const display = document.getElementById('selected-trainee-display');
+            if(selectedVoteId === null) {
+                display.innerHTML = `
+                    <div style="display:flex; align-items:center; justify-content:center; height:100%; border: 2px dashed var(--soft-pink); border-radius: 12px; color: #a28694; background: #fff; padding:12px;">
+                        <i class="fas fa-user-plus" style="margin-right: 10px; font-size: 20px;"></i>
+                        <span>Toque em uma trainee para escolher sua 1-Pick</span>
+                    </div>`;
+            } else {
+                const t = T.find(x => x.id === selectedVoteId);
+                if (!t) { selectedVoteId = null; return window.renderSelectedVoteDisplay(); }
+                display.innerHTML = `
+                    <div class="selected-pick-card" style="border: 3px solid var(--hot-pink); border-radius: 15px; background: white; box-shadow: 4px 4px 0px var(--soft-pink);">
+                        ${getSafeImgTag(t, '')}
+                        <div class="selected-pick-copy">
+                            <div class="pixel-text" style="font-size: 24px; color: var(--hot-pink); text-shadow: 1px 1px 0px var(--kawaii-yellow);">${escapeHTML(t.name)}</div>
+                            <small><i class="fas fa-heart"></i> Sua 1-Pick selecionada · toque no card novamente para remover</small>
+                        </div>
+                    </div>`;
+            }
+            updateVoteButtonState();
+        };
+
+        function updateVoteButtonState() {
+            const btn = document.getElementById('btn-submit');
+            if (!btn) return;
+            if (window.publicSeasonConfig && (!window.publicSeasonConfig.votacao_aberta || window.publicSeasonConfig.status === 'encerrada')) {
+                btn.disabled = true;
+                btn.innerHTML = window.publicSeasonConfig.status === 'encerrada'
+                    ? '<i class="fas fa-crown"></i> Temporada encerrada'
+                    : '<i class="fas fa-lock"></i> Votação fechada';
+                return;
+            }
+            const trainee = T.find(t => t.id === selectedVoteId);
+            btn.disabled = !trainee;
+            btn.innerHTML = trainee
+                ? `<i class="fas fa-paper-plane"></i> Enviar voto em ${escapeHTML(trainee.name)}`
+                : `<i class="fas fa-paper-plane"></i> Selecione sua 1-Pick`;
+        };
+
+        window.toggleVote = function(id) {
+            selectedVoteId = selectedVoteId === id ? null : id;
+            if (navigator.vibrate) navigator.vibrate(18);
+            window.renderVoteList();
+            window.renderSelectedVoteDisplay();
+        };
+        window.submitVote = async function() {
+            if (selectedVoteId === null) {
+                window.showModal('Atenção <i class="fas fa-exclamation-triangle"></i>', 'Por favor, escolha uma trainee para salvar!');
+                return;
+            }
+
+            const trainee = T.find(t => t.id === selectedVoteId);
+            if (!trainee) return;
+
+            if (usandoDadosDemonstrativos) {
+                window.showModal(
+                    'Banco indisponível <i class="fas fa-cloud-arrow-down"></i>',
+                    'Os dados demonstrativos estão visíveis, mas o voto oficial não pode ser enviado enquanto o Supabase estiver indisponível.'
+                );
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando voto...';
+
+            try {
+                const traineeId = Number(selectedVoteId);
+                if (!Number.isSafeInteger(traineeId) || traineeId <= 0) {
+                    throw new Error('O identificador da trainee é inválido.');
+                }
+
+                const { data, error } = await supabaseClient.rpc('registrar_voto_publico', {
+                    p_trainee_id: traineeId
+                });
+
+                if (error) throw error;
+                if (data && data.ok === false) {
+                    throw new Error(data.mensagem || 'O banco recusou o voto.');
+                }
+
+                localStorage.setItem('produce48-ultima-pick', String(selectedVoteId));
+                window.showModal(
+                    'Voto registrado! <i class="fas fa-heart"></i>',
+                    `Seu voto oficial em <strong>${escapeHTML(trainee.name)}</strong> foi enviado com sucesso.`
+                );
+
+                selectedVoteId = null;
+                window.renderVoteList();
+                window.renderSelectedVoteDisplay();
+            } catch (error) {
+                const errorText = formatSupabaseError(error);
+                console.group('Erro ao registrar voto');
+                console.error(error);
+                console.table({
+                    message: error?.message || '',
+                    details: error?.details || '',
+                    hint: error?.hint || '',
+                    code: error?.code || ''
+                });
+                console.groupEnd();
+
+                const localNote = window.location.protocol === 'file:'
+                    ? '<br><br><strong>Atenção:</strong> o site está aberto em <code>file://</code>. Isso não causa o erro SQL, mas pode bloquear links e recursos locais. Use uma hospedagem ou servidor local.'
+                    : '';
+
+                window.showModal(
+                    'Não foi possível votar <i class="fas fa-times-circle"></i>',
+                    `O Supabase recusou o registro.<br><small>${escapeHTML(errorText)}</small>${localNote}`
+                );
+                updateVoteButtonState();
+            }
+        };
+
+        document.addEventListener('keydown' , event => {
+            if (event.key === 'Escape') {
+                window.closeModal();
+                window.closeTraineeModal();
+            }
+        });
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', event => {
+                if (event.target === overlay) overlay.classList.remove('show');
+            });
+        });
+
+        // INICIAR
+        window.onload = carregarTraineesDoBanco;
+    </script>
+
+<style>
+  .season-public-banner{margin:0 0 18px;padding:12px 14px;text-align:center;color:#7b5465;background:#fff;border:2px dashed var(--soft-pink);border-radius:12px;font-size:13px;font-weight:700}
+  .season-public-banner.open{color:#277557;background:#e9fff5;border-color:#66d5a2}
+  .season-public-banner.closed{color:#965162;background:#fff0f3;border-color:#ff8fa5}
+</style>
+<script>
+(() => {
+  window.publicSeasonConfig = null;
+  const originalSubmitVote = window.submitVote;
+
+  function ensureSeasonBanner() {
+    let banner = document.getElementById('season-public-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'season-public-banner';
+      banner.className = 'season-public-banner';
+      const voteContent = document.querySelector('#view-vote .window-content');
+      if (voteContent) voteContent.prepend(banner);
+    }
+    return banner;
+  }
+
+  function applySeasonState() {
+    if (!window.publicSeasonConfig) return;
+    const banner = ensureSeasonBanner();
+    const btn = document.getElementById('btn-submit');
+    const ended = window.publicSeasonConfig.status === 'encerrada';
+    const open = window.publicSeasonConfig.votacao_aberta && !ended;
+    banner.className = `season-public-banner ${open ? 'open' : 'closed'}`;
+    banner.innerHTML = open
+      ? `<i class="fas fa-heart"></i> Semana ${window.publicSeasonConfig.semana_atual}: votação aberta!`
+      : ended
+        ? `<i class="fas fa-crown"></i> A temporada foi encerrada. Confira o ranking final!`
+        : `<i class="fas fa-lock"></i> A votação está temporariamente fechada. Aguarde a próxima semana.`;
+    if (btn && !open) {
+      btn.disabled = true;
+      btn.innerHTML = ended
+        ? '<i class="fas fa-crown"></i> Temporada encerrada'
+        : '<i class="fas fa-lock"></i> Votação fechada';
+    }
+  }
+
+  async function loadSeasonConfig() {
+    try {
+      const { data, error } = await supabaseClient
+        .from('temporada_config')
+        .select('*')
+        .eq('id', 1)
+        .single();
+      if (error) throw error;
+      window.publicSeasonConfig = data;
+      applySeasonState();
+    } catch (error) {
+      console.warn('Configuração da temporada indisponível:', error);
+    }
+  }
+
+  window.submitVote = async function() {
+    if (window.publicSeasonConfig && (!window.publicSeasonConfig.votacao_aberta || window.publicSeasonConfig.status === 'encerrada')) {
+      window.showModal(
+        window.publicSeasonConfig.status === 'encerrada' ? 'Temporada encerrada <i class="fas fa-crown"></i>' : 'Votação fechada <i class="fas fa-lock"></i>',
+        window.publicSeasonConfig.status === 'encerrada'
+          ? 'A temporada já terminou. Você ainda pode consultar o ranking e os perfis das trainees.'
+          : 'A administração ainda não abriu a votação desta semana.'
+      );
+      return;
+    }
+    return originalSubmitVote.apply(this, arguments);
+  };
+
+  document.addEventListener('DOMContentLoaded', loadSeasonConfig);
+  window.addEventListener('focus', loadSeasonConfig);
+})();
+</script>
+
+</body>
+</html>
