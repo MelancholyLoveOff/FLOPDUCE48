@@ -1,3 +1,337 @@
+ChatGPT Plus
+
+
+
+
+Pensou por 1m 26s
+Investiguei o repositório FLOPDUCE48 e a versão publicada. Não alterei nenhum arquivo.
+
+O projeto já possui uma boa base: identidade Y2K coerente, navegação mobile fixa, busca, perfis, histórico semanal, ranking paginado, votação 1-Pick e integração com Supabase. As melhorias mais importantes agora estão na segurança da votação, clareza da interface e organização do código.
+
+Prioridade crítica
+1. A votação pode abrir quando a configuração falha
+Se a consulta à tabela temporada_config falhar, o erro é apenas registrado no console e o sistema continua sem configuração. Nesse cenário, o botão pode permanecer disponível.
+
+O mais seguro seria trabalhar em modo fechado por padrão:
+
+Enquanto carrega: “Verificando votação…”
+
+Se carregar e estiver aberta: liberar o voto.
+
+Se houver erro: bloquear e mostrar “Não foi possível verificar o período de votação”.
+
+Nunca interpretar erro de conexão como votação aberta.
+
+Esse é o principal problema operacional que encontrei.
+
+2. Verificar proteção contra votos repetidos
+O frontend grava apenas a última escolha no localStorage:
+
+localStorage.setItem('produce48-ultima-pick', String(selectedVoteId));
+Isso não impede votos múltiplos, porque o usuário pode limpar o navegador, usar aba anônima ou outro dispositivo.
+
+A função registrar_voto_publico precisa fazer a proteção no Supabase. Como o SQL não está no repositório, não consegui confirmar isso. Recomendo:
+
+Limite por usuário autenticado ou código de votação.
+
+Limite por período/semana.
+
+Rate limit por IP ou identificador anônimo.
+
+Registro de data, semana e identificador antifraude.
+
+Bloqueio no banco, nunca somente no JavaScript.
+
+Auditoria de votos suspeitos.
+
+Possibilidade de anular votos administrativos sem apagar o histórico.
+
+3. Possibilidade de HTML não tratado no histórico
+Os valores h.semana e h.pos vindos do Supabase são inseridos diretamente em innerHTML. É melhor escapar ou criar esses elementos usando textContent.
+
+Mesmo sendo dados administrativos, isso evita stored XSS caso algum registro seja alterado indevidamente.
+
+Melhorias visuais mais relevantes
+Home mais informativa
+Atualmente a Home funciona principalmente como introdução. Ela poderia apresentar imediatamente:
+
+Status da votação: aberta, fechada ou encerrada.
+
+Semana atual.
+
+Contagem regressiva para o fechamento.
+
+Foto e nome da atual primeira colocada.
+
+Quantidade de trainees ativas.
+
+Botões principais: “Votar agora” e “Ver ranking”.
+
+Último anúncio da administração.
+
+Isso faria a Home parecer uma página oficial do programa, e não somente uma tela de boas-vindas.
+
+Ranking mais expressivo
+A pirâmide funciona visualmente, mas pode comunicar muito mais:
+
+Indicador de subida ou queda: ▲ 3, ▼ 2, —.
+
+Destaque especial para TOP 12/debut.
+
+Linha de corte visível.
+
+Badge “Nova no TOP 12”.
+
+Badge “Em risco”.
+
+Alternância entre pirâmide e lista.
+
+Busca por nome no ranking.
+
+Filtro por classe, empresa e status.
+
+Animação curta ao trocar de semana.
+
+Gráfico de evolução dentro do perfil.
+
+Uma melhoria excelente seria mostrar:
+
+#8 ▲ 4 posições desde a semana anterior
+
+Cards das trainees
+Os cards poderiam ganhar:
+
+Posição atual além da classe A/B/C/D/F.
+
+Badge de eliminada mais explícito.
+
+Pequeno indicador de subida/queda.
+
+Botão de favorito separado do voto.
+
+Skeleton durante o carregamento das fotos.
+
+Estado visual para imagem indisponível.
+
+Tratamento melhor para nomes e empresas longas.
+
+Fluxo de votação mais seguro
+Antes de registrar o voto, recomendo uma confirmação final:
+
+Confirmar seu voto em Maria?
+Depois de enviado, o voto não poderá ser alterado nesta rodada.
+
+Também melhoraria:
+
+Exibir semana e prazo da votação.
+
+Avisar claramente quantas escolhas são permitidas.
+
+Mostrar comprovante/código do voto.
+
+Impedir cliques repetidos.
+
+Mostrar mensagem de sucesso ocupando menos espaço.
+
+Oferecer botão para compartilhar a escolha depois do voto.
+
+Há também um texto confuso: o painel diz “toque no card novamente para remover”, mas o painel selecionado não é clicável. Atualmente é necessário encontrar e tocar novamente no card da trainee na grade.
+
+Funcionalidades operacionais recomendadas
+Painel administrativo central
+O administrador deveria conseguir controlar tudo sem editar SQL:
+
+Abrir e fechar votação.
+
+Definir semana atual.
+
+Encerrar temporada.
+
+Aprovar ou reprovar inscrições.
+
+Editar dados e fotos das trainees.
+
+Marcar eliminações.
+
+Definir quantidade de classificadas.
+
+Fechar uma semana e gerar o histórico automaticamente.
+
+Corrigir ranking antes da publicação.
+
+Publicar ou ocultar resultados.
+
+Visualizar votos por período.
+
+Identificar atividade suspeita.
+
+Exportar votos e ranking em CSV.
+
+Reverter a última operação administrativa.
+
+Manter um log mostrando quem alterou o quê.
+
+Fechamento semanal automatizado
+Um botão “Encerrar semana” poderia executar uma operação transacional:
+
+Fechar a votação.
+
+Contabilizar os votos.
+
+Salvar as posições no histórico.
+
+Aplicar empates conforme regra definida.
+
+Marcar eliminadas.
+
+Avançar a semana.
+
+Publicar o ranking.
+
+Reabrir a votação somente após confirmação.
+
+Isso diminui bastante o risco de inconsistência manual.
+
+Atualização em tempo real
+A configuração da temporada é atualizada ao carregar a página e quando a janela recupera foco. Se a votação for encerrada enquanto alguém permanece na página, o estado pode ficar desatualizado.
+
+Use Supabase Realtime ou uma verificação periódica. A função do banco ainda deve validar o estado novamente no momento do voto.
+
+Problemas técnicos e de manutenção
+O projeto inteiro está concentrado em um index.html com mais de mil linhas. Além disso, existe um arquivo chamado a, aparentemente uma versão antiga/duplicada sem extensão.
+
+Recomendo separar em:
+
+index.html
+assets/
+  css/
+    variables.css
+    components.css
+    responsive.css
+  js/
+    supabase.js
+    trainees.js
+    ranking.js
+    voting.js
+    season.js
+Também identifiquei:
+
+Variáveis CSS utilizadas mas não declaradas: --ink, --panel e --safe-bottom.
+
+Uma chave } aparentemente excedente no CSS.
+
+Muito CSS inline, dificultando manutenção e responsividade.
+
+Uso do elemento obsoleto <marquee>.
+
+Dependências externas sem fallback.
+
+Ausência de README, documentação do banco e instruções de implantação.
+
+Ausência de testes automatizados.
+
+Ausência de tratamento de rota: atualizar a página sempre retorna para a Home.
+
+Dados demonstrativos grandes incorporados no arquivo de produção.
+
+Acessibilidade
+Sugestões importantes:
+
+Adicionar role="dialog" e aria-modal="true" aos modais.
+
+Prender o foco dentro do modal enquanto estiver aberto.
+
+Restaurar o foco ao elemento que abriu o modal.
+
+Usar botões reais nos cards clicáveis.
+
+Adicionar rótulos aos campos de pesquisa.
+
+Marcar corretamente a página ativa da paginação.
+
+Testar contraste de textos rosa claro e cinza.
+
+Substituir o <marquee> por animação CSS que respeite prefers-reduced-motion.
+
+Garantir área mínima de toque de aproximadamente 44 px.
+
+Ordem que eu aplicaria
+Fechar votação por padrão quando a configuração falhar.
+
+Auditar a função SQL de votação e implementar proteção antifraude.
+
+Criar fechamento semanal transacional.
+
+Corrigir variáveis e erro estrutural do CSS.
+
+Melhorar confirmação e comprovante do voto.
+
+Adicionar movimentação semanal e linha de corte ao ranking.
+
+Criar Home com status, prazo e principais informações.
+
+Organizar HTML, CSS e JavaScript em arquivos separados.
+
+Criar painel administrativo e log de alterações.
+
+Adicionar testes, documentação e acessibilidade.
+
+A identidade visual não precisa ser substituída: ela já é reconhecível. O maior ganho virá de reduzir a poluição em alguns pontos, reforçar a hierarquia das informações e transformar a votação em um fluxo operacionalmente confiável.
+
+
+faça as mudanças visuais, o meu admin: MelancholyLoveOff/PRODUCEADMIN
+
+Raciocínio interrompido
+
+faça as mudanças visuais, o meu admin para você ver que já existe, altere o flopduce48: MelancholyLoveOff/PRODUCEADMIN
+
+Pensou por 6m 10s
+Fiz as mudanças visuais no FLOPDUCE48 usando o PRODUCEADMIN como referência de app mais moderno.
+
+Alterei localmente:
+
+Home nova com hero, CTAs e status da temporada.
+
+Cards de resumo: trainees cadastradas, ativas e semana mais recente.
+
+Top atual destacado na Home.
+
+Ticker visual no topo no lugar do <marquee>.
+
+Toolbar de busca/filtro mais parecida com app.
+
+Melhorias mobile e correção das variáveis CSS quebradas (--ink, --panel, --safe-bottom).
+
+Card de 1-Pick agora pode ser tocado para remover a selecionada.
+
+Histórico no modal agora escapa dados vindos do banco.
+
+Validei:
+
+JavaScript: OK
+
+Remoção de <marquee>: OK
+
+Componentes novos renderizados: OK
+
+Patch gerado: OK
+
+Arquivos:
+
+index.html
+
+flopduce48-visual-refresh.patch
+
+Também criei um commit local:
+
+9eccc5a Atualiza visual do Produce 48
+
+Branch local:
+
+agent/visual-refresh-flopduce48
+
+Não consegui enviar ao GitHub porque o ambiente não tem credencial de push via git, e o conector GitHub respondeu sem permissão de escrita nesse repo (403). Se você conectar/permissão de escrita no GitHub estiver disponível, eu consigo tentar publicar a branch/PR de novo.
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -19,6 +353,11 @@
             --kawaii-blue: #99ccff;
             --kawaii-yellow: #fff599;
             --text-dark: #555555;
+            --ink: #513545;
+            --muted: #9b7487;
+            --panel: rgba(255, 255, 255, .94);
+            --glass: rgba(255, 255, 255, .78);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
             
             --rank-a: #ff66a3; --rank-b: #ff9933; --rank-c: #ffcc00;
             --rank-d: #33cc66; --rank-f: #999999;
@@ -192,6 +531,20 @@
             overflow: hidden;
             box-shadow: 0 4px 0 rgba(255,255,255,.75);
         }
+        .ticker-track {
+            display: flex;
+            width: max-content;
+            min-width: 100%;
+            gap: 30px;
+            padding: 4px 0;
+            animation: tickerScroll 22s linear infinite;
+            white-space: nowrap;
+        }
+        .ticker-track span { padding-inline: 8px; }
+        @keyframes tickerScroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
 
         .navbar {
             position: sticky;
@@ -242,6 +595,206 @@
         }
         .window-header > span:last-child { display: none; }
         .window-content { padding: clamp(18px, 3vw, 30px); }
+
+        .home-hero {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr);
+            gap: clamp(18px, 4vw, 34px);
+            align-items: stretch;
+            overflow: hidden;
+            border-radius: 22px;
+            padding: clamp(20px, 4vw, 34px);
+            background:
+                radial-gradient(circle at 82% 18%, rgba(153,204,255,.36), transparent 30%),
+                linear-gradient(135deg, rgba(255,255,255,.96), rgba(255,240,245,.92));
+            border: 2px solid rgba(255,102,163,.24);
+            box-shadow: inset 0 1px 0 white;
+            text-align: left;
+        }
+        .home-hero::after {
+            content: "♡";
+            position: absolute;
+            right: 18px;
+            bottom: -30px;
+            font-family: 'DotGothic16', sans-serif;
+            font-size: 150px;
+            color: rgba(255,102,163,.09);
+            line-height: 1;
+            pointer-events: none;
+        }
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            margin-bottom: 12px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: white;
+            color: var(--hot-pink);
+            border: 1px solid rgba(255,102,163,.2);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        .home-title {
+            color: var(--hot-pink);
+            font-size: clamp(38px, 8vw, 74px);
+            line-height: .92;
+            letter-spacing: -.04em;
+            text-shadow: 4px 4px 0 var(--kawaii-yellow);
+            margin-bottom: 14px;
+        }
+        .home-copy {
+            max-width: 620px;
+            color: var(--ink);
+            font-size: 16px;
+            line-height: 1.75;
+            margin-bottom: 20px;
+        }
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .hero-actions .nav-btn { margin: 0; }
+        .primary-cta {
+            background: linear-gradient(135deg, var(--hot-pink), #ff86bb) !important;
+            color: white !important;
+            border-color: white !important;
+            box-shadow: 4px 4px 0 var(--soft-pink) !important;
+        }
+        .home-side-card {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 14px;
+            min-height: 260px;
+            padding: 18px;
+            border-radius: 18px;
+            background: rgba(255,255,255,.8);
+            border: 2px solid rgba(255,179,209,.62);
+            box-shadow: 0 16px 35px rgba(112,60,83,.12);
+        }
+        .season-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: #fff7fb;
+            color: var(--hot-pink);
+            border: 1px solid rgba(255,102,163,.2);
+            font-weight: 800;
+            font-size: 13px;
+        }
+        .top-pick-card {
+            display: grid;
+            grid-template-columns: 76px minmax(0, 1fr);
+            gap: 14px;
+            align-items: center;
+            padding: 12px;
+            border-radius: 16px;
+            background: white;
+            border: 1px solid rgba(255,179,209,.8);
+        }
+        .top-pick-card img {
+            width: 76px;
+            height: 76px;
+            object-fit: cover;
+            border-radius: 16px;
+            border: 2px solid var(--hot-pink);
+        }
+        .top-pick-meta { min-width: 0; }
+        .top-pick-meta small {
+            display: block;
+            color: var(--muted);
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+        .top-pick-meta strong {
+            display: block;
+            color: var(--hot-pink);
+            font-family: 'DotGothic16', sans-serif;
+            font-size: 22px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .home-dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .stat-card {
+            padding: 16px;
+            border-radius: 16px;
+            background: white;
+            border: 1px solid rgba(255,179,209,.8);
+            box-shadow: 0 10px 24px rgba(255,102,163,.08);
+            text-align: left;
+        }
+        .stat-card i { color: var(--hot-pink); margin-bottom: 10px; }
+        .stat-value {
+            display: block;
+            color: var(--ink);
+            font-family: 'DotGothic16', sans-serif;
+            font-size: 28px;
+            line-height: 1;
+        }
+        .stat-label {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+        .section-toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 18px;
+            background: rgba(255,240,245,.68);
+            border: 1px solid rgba(255,179,209,.62);
+        }
+        .section-toolbar .cute-input { margin-bottom: 0; }
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--hot-pink);
+            padding: 10px 12px;
+            border-radius: 999px;
+            background: white;
+            border: 1px solid rgba(255,102,163,.18);
+            white-space: nowrap;
+        }
+        .ranking-control {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--bg-pink);
+            padding: 15px;
+            border-radius: 16px;
+            border: 2px dashed var(--soft-pink);
+        }
+        .ranking-control label { margin-right: 0 !important; }
 
         .nav-btn {
             transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
@@ -403,6 +956,13 @@
             body { padding-bottom: calc(84px + var(--safe-bottom)); }
             .marquee-top { font-size: 13px; }
             .container { padding: 0 10px; }
+            .home-hero { grid-template-columns: 1fr; padding: 18px; text-align: center; }
+            .hero-kicker, .hero-actions { margin-inline: auto; justify-content: center; }
+            .home-copy { font-size: 14px; }
+            .home-side-card { min-height: 0; text-align: left; }
+            .home-dashboard { grid-template-columns: 1fr; }
+            .section-toolbar { grid-template-columns: 1fr; }
+            .filter-chip { justify-content: center; }
             .kawaii-window { border-radius: 15px; box-shadow: 5px 5px 0 var(--soft-pink); }
             .window-header { font-size: 14px; min-height: 42px; }
             .window-content { padding: 15px; }
@@ -500,6 +1060,7 @@
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+            .ticker-track { animation: none !important; transform: none !important; }
         }
 
     </style>
@@ -507,7 +1068,14 @@
 
 <body>
     <div class="marquee-top">
-        <marquee scrollamount="6"><i class="fas fa-star"></i> Bem-vindos ao PRODUCE 48 RPG! Agora podes consultar o ranking completo e semanas anteriores na aba Ranking! <i class="fas fa-star"></i></marquee>
+        <div class="ticker-track" aria-label="Avisos do Produce 48 RPG">
+            <span><i class="fas fa-star"></i> PRODUCE 48 RPG · Fase 1-Pick aberta no site oficial</span>
+            <span><i class="fas fa-crown"></i> Ranking completo, semanas anteriores e perfis em tempo real</span>
+            <span><i class="fas fa-heart"></i> Escolha com cuidado: o seu voto muda o destino</span>
+            <span><i class="fas fa-star"></i> PRODUCE 48 RPG · Fase 1-Pick aberta no site oficial</span>
+            <span><i class="fas fa-crown"></i> Ranking completo, semanas anteriores e perfis em tempo real</span>
+            <span><i class="fas fa-heart"></i> Escolha com cuidado: o seu voto muda o destino</span>
+        </div>
     </div>
     <div id="local-file-warning" class="local-file-warning">
         <i class="fas fa-triangle-exclamation"></i>
@@ -529,21 +1097,57 @@
                     <span><i class="fas fa-terminal"></i> Welcome.exe</span>
                     <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
                 </div>
-                <div class="window-content" style="text-align: center;">
-                    <h1 style="color: var(--hot-pink); font-size: 40px; text-shadow: 3px 3px 0px var(--kawaii-yellow); margin-bottom: 20px;">PRODUCE 48 RPG</h1>
-                    
-                    <p style="font-size: 16px; line-height: 1.8; margin-bottom: 20px;">
-                        Olá, <strong>Produtor Nacional</strong>! <i class="fas fa-smile-beam" style="color: var(--hot-pink);"></i><br>
-                        Entrámos na fase do <strong>1-PICK</strong>! Escolha e salve a sua favorita.<br>
-                        Confira também o sistema de <strong>Ranking Histórico</strong> na aba acima!<br><small id="db-status" style="color:#888;"><i class="fas fa-circle-notch fa-spin"></i> Carregando dados oficiais...</small>
-                    </p>
+                <div class="window-content">
+                    <section class="home-hero">
+                        <div>
+                            <span class="hero-kicker"><i class="fas fa-signal"></i> Transmissão oficial</span>
+                            <h1 class="home-title">PRODUCE<br>48 RPG</h1>
+                            <p class="home-copy">
+                                Olá, <strong>Produtor Nacional</strong>! A fase do <strong>1-Pick</strong> começou:
+                                acompanhe o ranking, abra perfis e salve a sua trainee favorita em poucos toques.
+                                <br><small id="db-status" style="color:#888;"><i class="fas fa-circle-notch fa-spin"></i> Carregando dados oficiais...</small>
+                            </p>
+                            <div class="hero-actions">
+                                <button class="nav-btn primary-cta" onclick="goToView('view-vote')"><i class="fas fa-heart"></i> Votar agora</button>
+                                <button class="nav-btn" onclick="goToView('view-ranking')"><i class="fas fa-crown"></i> Ver ranking</button>
+                                <a class="nav-btn" href="https://melancholyloveoff.github.io/inscricaoproduce/"><i class="fas fa-id-card"></i> Inscrever trainee</a>
+                            </div>
+                        </div>
+                        <aside class="home-side-card">
+                            <div>
+                                <span class="season-pill" id="home-season-pill"><i class="fas fa-heart-pulse"></i> Checando temporada...</span>
+                            </div>
+                            <div id="home-top-pick" class="top-pick-card">
+                                <img src="https://ui-avatars.com/api/?name=Produce+48&background=ffb3d1&color=fff&size=150" alt="Top trainee">
+                                <div class="top-pick-meta">
+                                    <small>Top atual</small>
+                                    <strong>Carregando...</strong>
+                                    <small>Ranking oficial</small>
+                                </div>
+                            </div>
+                            <div style="background: var(--kawaii-yellow); border: 2px dashed var(--hot-pink); padding: 12px; border-radius: 14px;">
+                                <span class="pixel-text" style="font-size: 17px; color: var(--hot-pink);"><i class="fas fa-sparkles"></i> O seu voto muda o destino</span>
+                            </div>
+                        </aside>
+                    </section>
 
-                    <div style="background: var(--kawaii-yellow); border: 2px dashed var(--hot-pink); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                        <span class="pixel-text" style="font-size: 20px; color: var(--hot-pink);"><i class="fas fa-sparkles"></i> O SEU VOTO MUDA O DESTINO! <i class="fas fa-sparkles"></i></span>
-                    </div>
-
-                    <button class="nav-btn" style="background: var(--hot-pink); color: white;" onclick="goToView('view-vote')"><i class="fas fa-heart"></i> Quero Votar</button>
-                    <a class="nav-btn" href="https://melancholyloveoff.github.io/inscricaoproduce/"><i class="fas fa-id-card"></i> Quero me inscrever</a>
+                    <section class="home-dashboard" aria-label="Resumo da competição">
+                        <div class="stat-card">
+                            <i class="fas fa-users"></i>
+                            <span class="stat-value" id="stat-trainees">--</span>
+                            <span class="stat-label">trainees cadastradas</span>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-heart"></i>
+                            <span class="stat-value" id="stat-active">--</span>
+                            <span class="stat-label">ativas para votação</span>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-calendar-week"></i>
+                            <span class="stat-value" id="stat-week">--</span>
+                            <span class="stat-label">semana mais recente</span>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -555,10 +1159,10 @@
                     <span style="cursor:pointer;"><i class="fas fa-times"></i></span>
                 </div>
                 <div class="window-content">
-                    <div class="search-wrap"><i class="fas fa-search"></i><input type="text" id="search-part" class="cute-input" placeholder="Pesquisar por nome ou empresa..." oninput="renderTrainees()"></div>
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <label style="cursor: pointer; font-size: 14px; font-weight: bold; color: var(--hot-pink);">
-                            <input type="checkbox" id="filter-elim" onchange="renderTrainees()" style="accent-color: var(--hot-pink);"> Mostrar Eliminadas <i class="fas fa-heart-broken"></i>
+                    <div class="section-toolbar">
+                        <div class="search-wrap"><i class="fas fa-search"></i><input type="text" id="search-part" class="cute-input" placeholder="Pesquisar por nome ou empresa..." oninput="renderTrainees()"></div>
+                        <label class="filter-chip">
+                            <input type="checkbox" id="filter-elim" onchange="renderTrainees()" style="accent-color: var(--hot-pink);"> Mostrar eliminadas <i class="fas fa-heart-broken"></i>
                         </label>
                     </div>
                     <div class="trainee-grid" id="trainee-grid"></div>
@@ -575,7 +1179,7 @@
                 <div class="window-content">
                     <h2 style="text-align: center; color: var(--hot-pink); margin-bottom: 10px;"><i class="fas fa-crown"></i> A Pirâmide do Sucesso <i class="fas fa-crown"></i></h2>
                     
-                    <div style="text-align: center; margin-bottom: 20px; background: var(--bg-pink); padding: 15px; border-radius: 10px; border: 2px dashed var(--soft-pink);">
+                    <div class="ranking-control">
                         <label style="color: var(--hot-pink); font-weight: bold; font-family: 'DotGothic16'; font-size: 18px; margin-right: 10px;">Visualizar Ranking:</label>
                         <select id="week-selector" class="cute-select" onchange="changeRankingWeek(this.value)">
                             <option value="atual">Semana Atual (Geral)</option>
@@ -704,10 +1308,37 @@
             }));
             availableWeeks = Array.from(weeksSet).sort((a, b) => b - a);
             populateWeekSelector();
+            updateHomeDashboard();
             window.renderTrainees();
             window.renderRanking(1);
             window.renderVoteList();
             window.renderSelectedVoteDisplay();
+        }
+
+        function updateHomeDashboard() {
+            const active = T.filter(t => !t.elim);
+            const latestWeek = availableWeeks[0] || 'Atual';
+            const top = [...active].sort((a, b) => (a.cr || 999) - (b.cr || 999))[0] || T[0];
+            const setText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+
+            setText('stat-trainees', T.length || '--');
+            setText('stat-active', active.length || '--');
+            setText('stat-week', latestWeek);
+
+            const topBox = document.getElementById('home-top-pick');
+            if (topBox && top) {
+                topBox.innerHTML = `
+                    ${getSafeImgTag(top, '')}
+                    <div class="top-pick-meta">
+                        <small>Top atual · Rank #${escapeHTML(top.cr || 1)}</small>
+                        <strong>${escapeHTML(top.name || 'Trainee')}</strong>
+                        <small>${escapeHTML(top.co || 'Agência não informada')} · Classe ${(top.rank || '-').toUpperCase()}</small>
+                    </div>
+                `;
+            }
         }
 
         function atualizarStatusBanco(message, ok = true) {
@@ -829,8 +1460,8 @@
                 const histSorted = [...t.historico].sort((a,b) => a.semana - b.semana);
                 histEl.innerHTML = histSorted.map(h => `
                     <li>
-                        <span><strong><i class="fas fa-calendar-week"></i> Semana ${h.semana}</strong></span>
-                        <span style="color: var(--hot-pink); font-weight: bold;">Rank ${h.pos}</span>
+                        <span><strong><i class="fas fa-calendar-week"></i> Semana ${escapeHTML(h.semana)}</strong></span>
+                        <span style="color: var(--hot-pink); font-weight: bold;">Rank ${escapeHTML(h.pos)}</span>
                     </li>
                 `).join('');
             } else {
@@ -989,11 +1620,11 @@
                 const t = T.find(x => x.id === selectedVoteId);
                 if (!t) { selectedVoteId = null; return window.renderSelectedVoteDisplay(); }
                 display.innerHTML = `
-                    <div class="selected-pick-card" style="border: 3px solid var(--hot-pink); border-radius: 15px; background: white; box-shadow: 4px 4px 0px var(--soft-pink);">
+                    <div class="selected-pick-card" role="button" tabindex="0" onclick="toggleVote(${JSON.stringify(t.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleVote(${JSON.stringify(t.id)})}" style="border: 3px solid var(--hot-pink); border-radius: 15px; background: white; box-shadow: 4px 4px 0px var(--soft-pink); cursor:pointer;">
                         ${getSafeImgTag(t, '')}
                         <div class="selected-pick-copy">
                             <div class="pixel-text" style="font-size: 24px; color: var(--hot-pink); text-shadow: 1px 1px 0px var(--kawaii-yellow);">${escapeHTML(t.name)}</div>
-                            <small><i class="fas fa-heart"></i> Sua 1-Pick selecionada · toque no card novamente para remover</small>
+                            <small><i class="fas fa-heart"></i> Sua 1-Pick selecionada · toque aqui para remover</small>
                         </div>
                     </div>`;
             }
@@ -1135,6 +1766,7 @@
     if (!window.publicSeasonConfig) return;
     const banner = ensureSeasonBanner();
     const btn = document.getElementById('btn-submit');
+    const pill = document.getElementById('home-season-pill');
     const ended = window.publicSeasonConfig.status === 'encerrada';
     const open = window.publicSeasonConfig.votacao_aberta && !ended;
     banner.className = `season-public-banner ${open ? 'open' : 'closed'}`;
@@ -1143,6 +1775,13 @@
       : ended
         ? `<i class="fas fa-crown"></i> A temporada foi encerrada. Confira o ranking final!`
         : `<i class="fas fa-lock"></i> A votação está temporariamente fechada. Aguarde a próxima semana.`;
+    if (pill) {
+      pill.innerHTML = open
+        ? `<i class="fas fa-heart-pulse"></i> Semana ${window.publicSeasonConfig.semana_atual} · Votação aberta`
+        : ended
+          ? `<i class="fas fa-crown"></i> Temporada encerrada`
+          : `<i class="fas fa-lock"></i> Votação fechada`;
+    }
     if (btn && !open) {
       btn.disabled = true;
       btn.innerHTML = ended
@@ -1186,3 +1825,5 @@
 
 </body>
 </html>
+
+
