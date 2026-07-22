@@ -845,16 +845,20 @@
                 <div class="window-content">
                     <h2 style="text-align: center; color: var(--hot-pink); margin-bottom: 10px;"><i class="fas fa-crown"></i> A Pirâmide do Sucesso <i class="fas fa-crown"></i></h2>
                     
-                    <div class="ranking-control">
-                        <label style="color: var(--hot-pink); font-weight: bold; font-family: 'DotGothic16'; font-size: 18px; margin-right: 10px;">Visualizar Ranking:</label>
-                        <select id="week-selector" class="cute-select" onchange="changeRankingWeek(this.value)">
-                            <option value="atual">Semana Atual (Geral)</option>
-                            </select>
+                    <div id="premiere-ranking-message" class="empty-state" hidden style="padding: 70px 20px; font-family: 'DotGothic16'; font-size: clamp(20px, 4vw, 34px); color: var(--hot-pink);">
+                        <i class="fas fa-heart" style="font-size: 46px; margin-bottom: 18px;"></i><br>
+                        Semana de estreia! Espere terminar a votação
                     </div>
-                    
-                    <div class="pyramid-wrap" id="ranking-pyramid"></div>
-                    
-                    <div id="ranking-pagination" style="text-align: center; margin-top: 30px;"></div>
+                    <div id="ranking-content">
+                        <div class="ranking-control">
+                            <label style="color: var(--hot-pink); font-weight: bold; font-family: 'DotGothic16'; font-size: 18px; margin-right: 10px;">Visualizar Ranking:</label>
+                            <select id="week-selector" class="cute-select" onchange="changeRankingWeek(this.value)">
+                                <option value="atual">Semana Atual (Geral)</option>
+                                </select>
+                        </div>
+                        <div class="pyramid-wrap" id="ranking-pyramid"></div>
+                        <div id="ranking-pagination" style="text-align: center; margin-top: 30px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -983,7 +987,8 @@
 
         function updateHomeDashboard() {
             const active = T.filter(t => !t.elim);
-            const latestWeek = availableWeeks[0] || 'Atual';
+            const premiere = Number(window.publicSeasonConfig?.semana_atual) === 0 && window.publicSeasonConfig?.status !== 'encerrada';
+            const latestWeek = premiere ? 'Estreia' : (availableWeeks[0] || 'Atual');
             const top = [...active].sort((a, b) => (a.cr || 999) - (b.cr || 999))[0] || T[0];
             const setText = (id, value) => {
                 const el = document.getElementById(id);
@@ -995,7 +1000,9 @@
             setText('stat-week', latestWeek);
 
             const topBox = document.getElementById('home-top-pick');
-            if (topBox && top) {
+            if (topBox && premiere) {
+                topBox.innerHTML = `<i class="fas fa-heart" style="font-size:42px;color:var(--hot-pink)"></i><div class="top-pick-meta"><small>Semana 0</small><strong>Semana de estreia!</strong><small>Espere terminar a votação</small></div>`;
+            } else if (topBox && top) {
                 topBox.innerHTML = `
                     ${getSafeImgTag(top, '')}
                     <div class="top-pick-meta">
@@ -1435,6 +1442,12 @@
     const pill = document.getElementById('home-season-pill');
     const ended = window.publicSeasonConfig.status === 'encerrada';
     const open = window.publicSeasonConfig.votacao_aberta && !ended;
+    const premiere = Number(window.publicSeasonConfig.semana_atual) === 0 && !ended;
+    const rankingContent = document.getElementById('ranking-content');
+    const premiereMessage = document.getElementById('premiere-ranking-message');
+    if (rankingContent) rankingContent.hidden = premiere;
+    if (premiereMessage) premiereMessage.hidden = !premiere;
+    updateHomeDashboard();
     banner.className = `season-public-banner ${open ? 'open' : 'closed'}`;
     banner.innerHTML = open
       ? `<i class="fas fa-heart"></i> Semana ${window.publicSeasonConfig.semana_atual}: votação aberta!`
