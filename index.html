@@ -1440,7 +1440,7 @@
       ? `<i class="fas fa-heart"></i> Semana ${window.publicSeasonConfig.semana_atual}: votação aberta!`
       : ended
         ? `<i class="fas fa-crown"></i> A temporada foi encerrada. Confira o ranking final!`
-        : `<i class="fas fa-lock"></i> A votação está temporariamente fechada. Aguarde a próxima semana.`;
+        : `<i class="fas fa-heart"></i> Votações em breve &lt;3`;
     if (pill) {
       pill.innerHTML = open
         ? `<i class="fas fa-heart-pulse"></i> Semana ${window.publicSeasonConfig.semana_atual} · Votação aberta`
@@ -1477,7 +1477,7 @@
         window.publicSeasonConfig.status === 'encerrada' ? 'Temporada encerrada <i class="fas fa-crown"></i>' : 'Votação fechada <i class="fas fa-lock"></i>',
         window.publicSeasonConfig.status === 'encerrada'
           ? 'A temporada já terminou. Você ainda pode consultar o ranking e os perfis das trainees.'
-          : 'A administração ainda não abriu a votação desta semana.'
+          : 'Votações em breve <3'
       );
       return;
     }
